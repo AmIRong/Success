@@ -25,6 +25,8 @@ C::creatapp();
 
 class core
 {
+    private static $_imports;
+    
     public static function autoload($class) {
         $class = strtolower($class);
         if(strpos($class, '_') !== false) {
