@@ -16,3 +16,12 @@ function return_bytes($val) {
     return $val;
 }
 
+function checkrobot($useragent = '') {
+    static $kw_spiders = array('bot', 'crawl', 'spider' ,'slurp', 'sohu-search', 'lycos', 'robozilla');
+    static $kw_browsers = array('msie', 'netscape', 'opera', 'konqueror', 'mozilla');
+
+    $useragent = strtolower(empty($useragent) ? $_SERVER['HTTP_USER_AGENT'] : $useragent);
+    if(strpos($useragent, 'http://') === false && dstrpos($useragent, $kw_browsers)) return false;
+    if(dstrpos($useragent, $kw_spiders)) return true;
+    return false;
+}
