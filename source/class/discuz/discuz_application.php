@@ -145,4 +145,10 @@ class discuz_application extends discuz_base{
         $this->var = & $_G;
     
     }
+    
+    public function timezone_set($timeoffset = 0) {
+        if(function_exists('date_default_timezone_set')) {
+            @date_default_timezone_set('Etc/GMT'.($timeoffset > 0 ? '-' : '+').(abs($timeoffset)));
+        }
+    }
 }
