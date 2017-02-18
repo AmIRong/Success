@@ -25,3 +25,14 @@ function checkrobot($useragent = '') {
     if(dstrpos($useragent, $kw_spiders)) return true;
     return false;
 }
+
+function dstrpos($string, $arr, $returnvalue = false) {
+    if(empty($string)) return false;
+    foreach((array)$arr as $v) {
+        if(strpos($string, $v) !== false) {
+            $return = $returnvalue ? $v : true;
+            return $return;
+        }
+    }
+    return false;
+}
