@@ -26,7 +26,7 @@ C::creatapp();
 class core
 {
     private static $_imports;
-    
+    private static $_app;
     public static function autoload($class) {
         $class = strtolower($class);
         if(strpos($class, '_') !== false) {
@@ -94,4 +94,13 @@ class core
         }
         return true;
     }
+    
+    public static function creatapp() {
+        if(!is_object(self::$_app)) {
+            self::$_app = discuz_application::instance();
+        }
+        return self::$_app;
+    }
 }
+
+class C extends core {}
