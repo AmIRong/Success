@@ -166,4 +166,25 @@ class discuz_application extends discuz_base{
         }
         return $ip;
     }
+    
+    private function _get_script_url() {
+        if(!isset($this->var['PHP_SELF'])){
+            $scriptName = basename($_SERVER['SCRIPT_FILENAME']);
+            if(basename($_SERVER['SCRIPT_NAME']) === $scriptName) {
+                $this->var['PHP_SELF'] = $_SERVER['SCRIPT_NAME'];
+            } else if(basename($_SERVER['PHP_SELF']) === $scriptName) {
+                $this->var['PHP_SELF'] = $_SERVER['PHP_SELF'];
+            } else if(isset($_SERVER['ORIG_SCRIPT_NAME']) && basename($_SERVER['ORIG_SCRIPT_NAME']) === $scriptName) {
+                $this->var['PHP_SELF'] = $_SERVER['ORIG_SCRIPT_NAME'];
+            } else if(($pos = strpos($_SERVER['PHP_SELF'],'/'.$scriptName)) !== false) {
+                $this->var['PHP_SELF'] = substr($_SERVER['SCRIPT_NAME'],0,$pos).'/'.$scriptName;
+            } else if(isset($_SERVER['DOCUMENT_ROOT']) && strpos($_SERVER['SCRIPT_FILENAME'],$_SERVER['DOCUMENT_ROOT']) === 0) {
+                $this->var['PHP_SELF'] = str_replace('\\','/',str_replace($_SERVER['DOCUMENT_ROOT'],'',$_SERVER['SCRIPT_FILENAME']));
+                $this->var['PHP_SELF'][0] != '/' && $this->var['PHP_SELF'] = '/'.$this->var['PHP_SELF'];
+            } else {
+                system_error('request_tainting');
+            }
+        }
+        return $this->var['PHP_SELF'];
+    }
 }
