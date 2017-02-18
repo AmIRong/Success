@@ -25,5 +25,47 @@ C::creatapp();
 
 class core
 {
+    public static function autoload($class) {
+        $class = strtolower($class);
+        if(strpos($class, '_') !== false) {
+            list($folder) = explode('_', $class);
+            $file = 'class/'.$folder.'/'.substr($class, strlen($folder) + 1);
+        } else {
+            $file = 'class/'.$class;
+        }
+    
+        try {
+    
+            self::import($file);
+            return true;
+    
+        } catch (Exception $exc) {
+    
+            $trace = $exc->getTrace();
+            foreach ($trace as $log) {
+                if(empty($log['class']) && $log['function'] == 'class_exists') {
+                    return false;
+                }
+            }
+            discuz_error::exception_error($exc);
+        }
+    }
+    
+    public static function handleException($exception) {
+        discuz_error::exception_error($exception);
+    }
+    
+    
+    public static function handleError($errno, $errstr, $errfile, $errline) {
+        if($errno & DISCUZ_CORE_DEBUG) {
+            discuz_error::system_error($errstr, false, true, false);
+        }
+    }
+    
+    public static function handleShutdown() {
+        if(($error = error_get_last()) && $error['type'] & DISCUZ_CORE_DEBUG) {
+            discuz_error::system_error($error['message'], false, true, false);
+        }
+    }
     
 }
