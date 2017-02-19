@@ -726,3 +726,71 @@ function initinput() {
 		</div>
 <?php
 }
+
+function install_uc_server() {
+    global $db, $dbhost, $dbuser, $dbpw, $dbname, $tablepre, $username, $password, $email;
+
+    $ucsql = file_get_contents(ROOT_PATH.'./uc_server/install/uc.sql');
+    $uctablepre = $tablepre.'ucenter_';
+    $ucsql = str_replace(' uc_', ' '.$uctablepre, $ucsql);
+    $ucsql && runucquery($ucsql, $uctablepre);
+    $appauthkey = _generate_key();
+    $ucdbhost = $dbhost;
+    $ucdbname = $dbname;
+    $ucdbuser = $dbuser;
+    $ucdbpw = $dbpw;
+    $ucdbcharset = DBCHARSET;
+
+    $uccharset = CHARSET;
+
+    $pathinfo = pathinfo($_SERVER['PHP_SELF']);
+    $pathinfo['dirname'] = substr($pathinfo['dirname'], 0, -8);
+    $isHTTPS = ($_SERVER['HTTPS'] && strtolower($_SERVER['HTTPS']) != 'off') ? true : false;
+    $appurl = 'http'.($isHTTPS ? 's' : '').'://'.preg_replace("/\:\d+/", '', $_SERVER['HTTP_HOST']).($_SERVER['SERVER_PORT'] && $_SERVER['SERVER_PORT'] != 80 && $_SERVER['SERVER_PORT'] != 443 ? ':'.$_SERVER['SERVER_PORT'] : '').$pathinfo['dirname'];
+    $ucapi = $appurl.'/uc_server';
+    $ucip = '';
+    $app_tagtemplates = 'apptagtemplates[template]='.urlencode('<a href="{url}" target="_blank">{subject}</a>').'&'.
+        'apptagtemplates[fields][subject]='.urlencode($lang['tagtemplates_subject']).'&'.
+        'apptagtemplates[fields][uid]='.urlencode($lang['tagtemplates_uid']).'&'.
+        'apptagtemplates[fields][username]='.urlencode($lang['tagtemplates_username']).'&'.
+        'apptagtemplates[fields][dateline]='.urlencode($lang['tagtemplates_dateline']).'&'.
+        'apptagtemplates[fields][url]='.urlencode($lang['tagtemplates_url']);
+
+    $db->query("INSERT INTO {$uctablepre}applications SET name='Discuz! Board', url='$appurl', ip='$ucip', authkey='$appauthkey', synlogin='1', charset='$charset', dbcharset='$dbcharset', type='DISCUZX', recvnote='1', tagtemplates='$apptagtemplates'", $link);
+    $appid = $db->insert_id($link);
+    $db->query("ALTER TABLE {$uctablepre}notelist ADD COLUMN app$appid tinyint NOT NULL");
+
+    $config = array($appauthkey,$appid,$ucdbhost,$ucdbname,$ucdbuser,$ucdbpw,$ucdbcharset,$uctablepre,$uccharset,$ucapi,$ucip);
+    save_uc_config($config, ROOT_PATH.'./config/config_ucenter.php');
+
+    $salt = substr(uniqid(rand()), -6);
+    $passwordmd5 = md5(md5($password).$salt);
+    $db->query("INSERT INTO {$uctablepre}members SET $sqladd username='$username', password='$passwordmd5', email='$email', regip='hidden', regdate='".time()."', salt='$salt'");
+    $uid = $db->insert_id();
+    $db->query("INSERT INTO {$uctablepre}memberfields SET uid='$uid'");
+
+    $db->query("INSERT INTO {$uctablepre}admins SET
+    uid='$uid',
+    username='$username',
+    allowadminsetting='1',
+    allowadminapp='1',
+    allowadminuser='1',
+    allowadminbadword='1',
+    allowadmincredits='1',
+    allowadmintag='1',
+    allowadminpm='1',
+    allowadmindomain='1',
+    allowadmindb='1',
+    allowadminnote='1',
+    allowadmincache='1',
+    allowadminlog='1'");
+
+    uc_write_config($config, ROOT_PATH.'./uc_server/data/config.inc.php', $password);
+
+    @unlink(ROOT_PATH.'./uc_server/install/index.php');
+    @unlink(ROOT_PATH.'./uc_server/data/cache/settings.php');
+    @touch(ROOT_PATH.'./uc_server/data/upgrade.lock');
+    @touch(ROOT_PATH.'./uc_server/data/install.lock');
+    dir_clear(ROOT_PATH.'./uc_server/data/cache');
+    dir_clear(ROOT_PATH.'./uc_server/data/view');
+}
