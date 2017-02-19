@@ -354,3 +354,40 @@ function show_env_result(&$env_items, &$dirfile_items, &$func_items, &$filesock_
     }
 
 }
+function show_step($step) {
+
+    global $method;
+
+    $laststep = 4;
+    $title = lang('step_'.$method.'_title');
+    $comment = lang('step_'.$method.'_desc');
+    $step_title_1 = lang('step_title_1');
+    $step_title_2 = lang('step_title_2');
+    $step_title_3 = lang('step_title_3');
+    $step_title_4 = lang('step_title_4');
+
+    $stepclass = array();
+    for($i = 1; $i <= $laststep; $i++) {
+        $stepclass[$i] = $i == $step ? 'current' : ($i < $step ? '' : 'unactivated');
+    }
+    $stepclass[$laststep] .= ' last';
+
+    echo <<<EOT
+	<div class="setup step{$step}">
+		<h2>$title</h2>
+		<p>$comment</p>
+	</div>
+	<div class="stepstat">
+		<ul>
+			<li class="$stepclass[1]">$step_title_1</li>
+			<li class="$stepclass[2]">$step_title_2</li>
+			<li class="$stepclass[3]">$step_title_3</li>
+			<li class="$stepclass[4]">$step_title_4</li>
+		</ul>
+		<div class="stepstatbg stepstat1"></div>
+	</div>
+</div>
+<div class="main">
+EOT;
+
+}
