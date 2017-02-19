@@ -6,3 +6,6 @@ error_reporting(E_ERROR | E_WARNING | E_PARSE);
 define('IN_DISCUZ', TRUE);
 define('IN_COMSENZ', TRUE);
 define('ROOT_PATH', dirname(__FILE__).'/../');
+
+require ROOT_PATH.'./source/discuz_version.php';
+require ROOT_PATH.'./install/include/install_var.php';
