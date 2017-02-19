@@ -391,3 +391,20 @@ function show_step($step) {
 EOT;
 
 }
+    
+function show_next_step($step, $error_code) {
+    global $uchidden;
+    echo "<form action=\"index.php\" method=\"post\">\n";
+    echo "<input type=\"hidden\" name=\"step\" value=\"$step\" />";
+    if(isset($GLOBALS['hidden'])) {
+        echo $GLOBALS['hidden'];
+    }
+    echo "<input type=\"hidden\" name=\"uchidden\" value=\"$uchidden\" />";
+    if($error_code == 0) {
+        $nextstep = "<input type=\"button\" onclick=\"history.back();\" value=\"".lang('old_step')."\"><input type=\"submit\" value=\"".lang('new_step')."\">\n";
+    } else {
+        $nextstep = "<input type=\"button\" disabled=\"disabled\" value=\"".lang('not_continue')."\">\n";
+    }
+    echo "<div class=\"btnbox marginbot\">".$nextstep."</div>\n";
+    echo "</form>\n";
+}
