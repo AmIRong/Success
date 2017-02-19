@@ -662,3 +662,19 @@ function setdefault($var, $default) {
     }
     return $var;
 }
+
+function getvars($data, $type = 'VAR') {
+    $evaluate = '';
+    foreach($data as $key => $val) {
+        if(!preg_match("/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$/", $key)) {
+            continue;
+        }
+        if(is_array($val)) {
+            $evaluate .= buildarray($val, 0, "\${$key}")."\r\n";
+        } else {
+            $val = addcslashes($val, '\'\\');
+            $evaluate .= $type == 'VAR' ? "\$$key = '$val';\n" : "define('".strtoupper($key)."', '$val');\n";
+        }
+    }
+    return $evaluate;
+}
