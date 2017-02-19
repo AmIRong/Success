@@ -9,3 +9,4 @@ define('ROOT_PATH', dirname(__FILE__).'/../');
 
 require ROOT_PATH.'./source/discuz_version.php';
 require ROOT_PATH.'./install/include/install_var.php';
+
