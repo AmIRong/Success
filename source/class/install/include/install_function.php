@@ -926,3 +926,18 @@ function uc_write_config($config, $file, $password) {
     fclose($fp);
 
 }
+
+function dir_clear($dir) {
+    global $lang;
+    showjsmessage($lang['clear_dir'].' '.str_replace(ROOT_PATH, '', $dir));
+    if($directory = @dir($dir)) {
+        while($entry = $directory->read()) {
+            $filename = $dir.'/'.$entry;
+            if(is_file($filename)) {
+                @unlink($filename);
+            }
+        }
+        $directory->close();
+        @touch($dir.'/index.htm');
+    }
+}
