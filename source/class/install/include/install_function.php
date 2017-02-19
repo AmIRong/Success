@@ -985,3 +985,17 @@ function install_extra_setting() {
         $db->query("REPLACE INTO {$tablepre}common_setting SET skey='$key', svalue='".addslashes(serialize($val))."'");
     }
 }
+
+function install_data($username, $uid) {
+    global $_G, $db, $tablepre;
+    showjsmessage(lang('install_data')." ... ".lang('succeed'));
+
+    $_G = array('db'=>$db,'tablepre'=>$tablepre, 'uid'=>$uid, 'username'=>$username);
+
+    $arr = array(
+        0=> array('importfile'=>'./data/group_index.xml','primaltplname'=>'group/index', 'targettplname'=>'group/index'),
+    );
+    foreach ($arr as $v) {
+        import_diy($v['importfile'], $v['primaltplname'], $v['targettplname']);
+    }
+}
