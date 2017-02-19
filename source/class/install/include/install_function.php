@@ -14,3 +14,22 @@ function getgpc($k, $t='GP') {
     }
     return isset($var[$k]) ? $var[$k] : null;
 }
+
+function timezone_set($timeoffset = 8) {
+    if(function_exists('date_default_timezone_set')) {
+        @date_default_timezone_set('Etc/GMT'.($timeoffset > 0 ? '-' : '+').(abs($timeoffset)));
+    }
+}
+
+function transfer_ucinfo(&$post) {
+    global $uchidden;
+    if(isset($post['ucapi']) && isset($post['ucfounderpw'])) {
+        $arr = array(
+            'ucapi' => $post['ucapi'],
+            'ucfounderpw' => $post['ucfounderpw']
+        );
+        $uchidden = urlencode(serialize($arr));
+    } else {
+        $uchidden = '';
+    }
+}
