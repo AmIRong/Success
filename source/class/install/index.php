@@ -14,3 +14,6 @@ if(function_exists('mysql_connect')) {
 } else {
     require ROOT_PATH.'./install/include/install_mysqli.php';
 }
+
+require ROOT_PATH.'./install/include/install_function.php';
+require ROOT_PATH.'./install/include/install_lang.php';
