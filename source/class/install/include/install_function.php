@@ -999,3 +999,55 @@ function install_data($username, $uid) {
         import_diy($v['importfile'], $v['primaltplname'], $v['targettplname']);
     }
 }
+
+function import_diy($importfile, $primaltplname, $targettplname) {
+    global $_G;
+
+    $css = $html = '';
+    $arr = array();
+
+    $content = file_get_contents(realpath($importfile));
+    require_once ROOT_PATH.'./source/class/class_xml.php';
+    if (empty($content)) return $arr;
+    $diycontent = xml2array($content);
+
+    if ($diycontent) {
+
+        foreach ($diycontent['layoutdata'] as $key => $value) {
+            if (!empty($value)) getframeblock($value);
+        }
+        $newframe = array();
+        foreach ($_G['curtplframe'] as $value) {
+            $newframe[] = $value['type'].random(6);
+        }
+
+        $mapping = array();
+        if (!empty($diycontent['blockdata'])) {
+            $mapping = block_import($diycontent['blockdata']);
+            unset($diycontent['blockdata']);
+        }
+
+        $oldbids = $newbids = array();
+        if (!empty($mapping)) {
+            foreach($mapping as $obid=>$nbid) {
+                $oldbids[] = 'portal_block_'.$obid;
+                $newbids[] = 'portal_block_'.$nbid;
+            }
+        }
+
+        require_once ROOT_PATH.'./source/class/class_xml.php';
+        $xml = array2xml($diycontent['layoutdata'],true);
+        $xml = str_replace($oldbids, $newbids, $xml);
+        $xml = str_replace((array)array_keys($_G['curtplframe']), $newframe, $xml);
+        $diycontent['layoutdata'] = xml2array($xml);
+
+        $css = str_replace($oldbids, $newbids, $diycontent['spacecss']);
+        $css = str_replace((array)array_keys($_G['curtplframe']), $newframe, $css);
+
+        $arr['spacecss'] = $css;
+        $arr['layoutdata'] = $diycontent['layoutdata'];
+        $arr['style'] = $diycontent['style'];
+        save_diy_data($primaltplname, $targettplname, $arr, true);
+    }
+    return $arr;
+}
