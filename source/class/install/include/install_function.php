@@ -1051,3 +1051,18 @@ function import_diy($importfile, $primaltplname, $targettplname) {
     }
     return $arr;
 }
+
+function install_testdata($username, $uid) {
+    global $_G, $db, $tablepre;
+    showjsmessage(lang('install_test_data')." ... ".lang('succeed'));
+
+    $sqlfile = ROOT_PATH.'./install/data/common_district_{#id}.sql';
+    for($i = 1; $i < 4; $i++) {
+        $sqlfileid = str_replace('{#id}', $i, $sqlfile);
+        if(file_exists($sqlfileid)) {
+            $sql = file_get_contents($sqlfileid);
+            $sql = str_replace("\r\n", "\n", $sql);
+            runquery($sql);
+        }
+    }
+}
