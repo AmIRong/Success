@@ -636,3 +636,18 @@ function random($length) {
     }
     return $hash;
 }
+
+function save_config_file($filename, $config, $default) {
+    $config = setdefault($config, $default);
+    $date = gmdate("Y-m-d H:i:s", time() + 3600 * 8);
+    $content = <<<EOT
+<?php
+
+
+\$_config = array();
+
+EOT;
+    $content .= getvars(array('_config' => $config));
+    $content .= "\r\n// ".str_pad('  THE END  ', 50, '-', STR_PAD_BOTH)." //\r\n\r\n?>";
+    file_put_contents($filename, $content);
+}
