@@ -707,3 +707,22 @@ function buildarray($array, $level = 0, $pre = '$_config') {
     }
     return $return;
 }
+
+function show_install() {
+    if(VIEW_OFF) return;
+    ?>
+<script type="text/javascript">
+function showmessage(message) {
+	document.getElementById('notice').innerHTML += message + '<br />';
+	document.getElementById('notice').scrollTop = 100000000;
+}
+function initinput() {
+	window.location='index.php?method=ext_info';
+}
+</script>
+		<div id="notice"></div>
+		<div class="btnbox margintop marginbot">
+			<input type="button" name="submit" value="<?php echo lang('install_in_processed');?>" disabled="disabled" id="laststep" onclick="initinput()">
+		</div>
+<?php
+}
