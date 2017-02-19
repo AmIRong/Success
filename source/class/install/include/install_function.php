@@ -794,3 +794,13 @@ function install_uc_server() {
     dir_clear(ROOT_PATH.'./uc_server/data/cache');
     dir_clear(ROOT_PATH.'./uc_server/data/view');
 }
+
+function _generate_key() {
+    $random = random(32);
+    $info = md5($_SERVER['SERVER_SOFTWARE'].$_SERVER['SERVER_NAME'].$_SERVER['SERVER_ADDR'].$_SERVER['SERVER_PORT'].$_SERVER['HTTP_USER_AGENT'].time());
+    $return = array();
+    for($i=0; $i<32; $i++) {
+        $return[$i] = $random[$i].$info[$i];
+    }
+    return implode('', $return);
+}
