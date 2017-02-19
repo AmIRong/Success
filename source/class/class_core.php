@@ -101,6 +101,10 @@ class core
         }
         return self::$_app;
     }
+    
+    public static function app() {
+        return self::$_app;
+    }
 }
 
 class C extends core {}
