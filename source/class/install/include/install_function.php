@@ -522,3 +522,16 @@ function show_setting($setname, $varname = '', $value = '', $type = 'text|passwo
     echo "$comment</td>\n</tr>\n";
     return true;
 }
+
+function show_tips($tip, $title = '', $comment = '', $style = 1) {
+    global $lang;
+    $title = empty($title) ? lang($tip) : $title;
+    $comment = empty($comment) ? lang($tip.'_comment', FALSE) : $comment;
+    if($style) {
+        echo "<div class=\"desc\"><b>$title</b>";
+    } else {
+        echo "</div><div class=\"main\" style=\"margin-top: -123px;\">$title<div class=\"desc1 marginbot\"><ul>";
+    }
+    $comment && print('<br>'.$comment);
+    echo "</div>";
+}
