@@ -110,3 +110,16 @@ function dsetcookie($var, $value = '', $life = 0, $prefix = 1, $httponly = false
     }
 }
 
+function getglobal($key, $group = null) {
+    global $_G;
+    $key = explode('/', $group === null ? $key : $group.'/'.$key);
+    $v = &$_G;
+    foreach ($key as $k) {
+        if (!isset($v[$k])) {
+            return null;
+        }
+        $v = &$v[$k];
+    }
+    return $v;
+}
+
