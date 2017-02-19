@@ -896,3 +896,33 @@ EOT;
     }
     return $success;
 }
+
+function uc_write_config($config, $file, $password) {
+    list($appauthkey, $appid, $ucdbhost, $ucdbname, $ucdbuser, $ucdbpw, $ucdbcharset, $uctablepre, $uccharset, $ucapi, $ucip) = $config;
+    $ucauthkey = _generate_key();
+    $ucsiteid = _generate_key();
+    $ucmykey = _generate_key();
+    $salt = substr(_generate_key(), 0, 6);
+    $pw = md5(md5($password).$salt);
+    $config = "<?php \r\ndefine('UC_DBHOST', '$ucdbhost');\r\n";
+    $config .= "define('UC_DBUSER', '$ucdbuser');\r\n";
+    $config .= "define('UC_DBPW', '$ucdbpw');\r\n";
+    $config .= "define('UC_DBNAME', '$ucdbname');\r\n";
+    $config .= "define('UC_DBCHARSET', '$ucdbcharset');\r\n";
+    $config .= "define('UC_DBTABLEPRE', '$uctablepre');\r\n";
+    $config .= "define('UC_COOKIEPATH', '/');\r\n";
+    $config .= "define('UC_COOKIEDOMAIN', '');\r\n";
+    $config .= "define('UC_DBCONNECT', 0);\r\n";
+    $config .= "define('UC_CHARSET', '".$uccharset."');\r\n";
+    $config .= "define('UC_FOUNDERPW', '$pw');\r\n";
+    $config .= "define('UC_FOUNDERSALT', '$salt');\r\n";
+    $config .= "define('UC_KEY', '$ucauthkey');\r\n";
+    $config .= "define('UC_SITEID', '$ucsiteid');\r\n";
+    $config .= "define('UC_MYKEY', '$ucmykey');\r\n";
+    $config .= "define('UC_DEBUG', false);\r\n";
+    $config .= "define('UC_PPP', 20);\r\n";
+    $fp = fopen($file, 'w');
+    fwrite($fp, $config);
+    fclose($fp);
+
+}
