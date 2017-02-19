@@ -117,3 +117,4 @@ function show_footer($quit = true) {
 EOT;
     $quit && exit();
 }
+
