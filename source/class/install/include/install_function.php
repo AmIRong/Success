@@ -579,3 +579,49 @@ function check_db($dbhost, $dbuser, $dbpw, $dbname, $tablepre) {
     }
     return true;
 }
+
+function show_msg($error_no, $error_msg = 'ok', $success = 1, $quit = TRUE) {
+    if(VIEW_OFF) {
+        $error_code = $success ? 0 : constant(strtoupper($error_no));
+        $error_msg = empty($error_msg) ? $error_no : $error_msg;
+        $error_msg = str_replace('"', '\"', $error_msg);
+        $str = "<root>\n";
+        $str .= "\t<error errorCode=\"$error_code\" errorMessage=\"$error_msg\" />\n";
+        $str .= "</root>";
+        echo $str;
+        exit;
+    } else {
+        show_header();
+        global $step;
+
+        $title = lang($error_no);
+        $comment = lang($error_no.'_comment', false);
+        $errormsg = '';
+
+        if($error_msg) {
+            if(!empty($error_msg)) {
+                foreach ((array)$error_msg as $k => $v) {
+                    if(is_numeric($k)) {
+                        $comment .= "<li><em class=\"red\">".lang($v)."</em></li>";
+                    }
+                }
+            }
+        }
+
+        if($step > 0) {
+            echo "<div class=\"desc\"><b>$title</b><ul>$comment</ul>";
+        } else {
+            echo "</div><div class=\"main\" style=\"margin-top: -123px;\"><b>$title</b><ul style=\"line-height: 200%; margin-left: 30px;\">$comment</ul>";
+        }
+
+        if($quit) {
+            echo '<br /><span class="red">'.lang('error_quit_msg').'</span><br /><br /><br />';
+        }
+
+        echo '<input type="button" onclick="history.back()" value="'.lang('click_to_back').'" /><br /><br /><br />';
+
+        echo '</div>';
+
+        $quit && show_footer();
+    }
+}
