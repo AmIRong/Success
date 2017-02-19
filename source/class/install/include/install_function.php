@@ -535,3 +535,16 @@ function show_tips($tip, $title = '', $comment = '', $style = 1) {
     $comment && print('<br>'.$comment);
     echo "</div>";
 }
+function dhtmlspecialchars($string) {
+    if(is_array($string)) {
+        foreach($string as $key => $val) {
+            $string[$key] = dhtmlspecialchars($val);
+        }
+    } else {
+        $string = str_replace(array('&', '"', '<', '>'), array('&amp;', '&quot;', '&lt;', '&gt;'), $string);
+        if(strpos($string, '&amp;#') !== false) {
+            $string = preg_replace('/&amp;((#(\d{3,5}|x[a-fA-F0-9]{4}));)/', '&\\1', $string);
+        }
+    }
+    return $string;
+}
