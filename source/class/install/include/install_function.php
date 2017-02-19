@@ -651,3 +651,14 @@ EOT;
     $content .= "\r\n// ".str_pad('  THE END  ', 50, '-', STR_PAD_BOTH)." //\r\n\r\n?>";
     file_put_contents($filename, $content);
 }
+
+function setdefault($var, $default) {
+    foreach ($default as $k => $v) {
+        if(!isset($var[$k])) {
+            $var[$k] = $default[$k];
+        } elseif(is_array($v)) {
+            $var[$k] = setdefault($var[$k], $default[$k]);
+        }
+    }
+    return $var;
+}
