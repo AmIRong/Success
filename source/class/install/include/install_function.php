@@ -105,3 +105,15 @@ EOT;
 function lang($lang_key, $force = true) {
     return isset($GLOBALS['lang'][$lang_key]) ? $GLOBALS['lang'][$lang_key] : ($force ? $lang_key : '');
 }
+
+function show_footer($quit = true) {
+
+    echo <<<EOT
+		<div class="footer">&copy;2001 - 2013 <a href="http://www.comsenz.com/">Comsenz</a> Inc.</div>
+	</div>
+</div>
+</body>
+</html>
+EOT;
+    $quit && exit();
+}
