@@ -52,3 +52,10 @@ if(in_array($method, array('app_reg', 'ext_info'))) {
     $default_ucapi = $bbserver.'/ucenter';
     $default_appurl = $bbserver.substr($PHP_SELF, 0, strrpos($PHP_SELF, '/') - 8);
 }
+
+if($method == 'show_license') {
+
+    transfer_ucinfo($_POST);
+    show_license();
+
+}
