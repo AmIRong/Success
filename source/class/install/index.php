@@ -58,14 +58,4 @@ if($method == 'show_license') {
     transfer_ucinfo($_POST);
     show_license();
 
-} elseif($method == 'env_check') {
-
-    VIEW_OFF && function_check($func_items);
-
-    env_check($env_items);
-
-    dirfile_check($dirfile_items);
-
-    show_env_result($env_items, $dirfile_items, $func_items, $filesock_items);
-
 }
