@@ -409,3 +409,116 @@ function show_next_step($step, $error_code) {
     echo "</form>\n";
 }
 
+function show_form(&$form_items, $error_msg) {
+
+    global $step, $uchidden;
+
+    if(empty($form_items) || !is_array($form_items)) {
+        return;
+    }
+
+    show_header();
+    show_setting('start');
+    show_setting('hidden', 'step', $step);
+    show_setting('hidden', 'install_ucenter', getgpc('install_ucenter'));
+    if($step == 2) {
+        show_tips('install_dzfull');
+        show_tips('install_dzonly');
+    }
+    $is_first = 1;
+    if(!empty($uchidden)) {
+        $uc_info_transfer = unserialize(urldecode($uchidden));
+    }
+    echo '<div id="form_items_'.$step.'" '.($step == 2 && !getgpc('install_ucenter') ? 'style="display:none"' : '').'><br />';
+    foreach($form_items as $key => $items) {
+        global ${'error_'.$key};
+        if($is_first == 0) {
+            echo '</table>';
+        }
+
+        if(!${'error_'.$key}) {
+            show_tips('tips_'.$key);
+        } else {
+            show_error('tips_admin_config', ${'error_'.$key});
+        }
+
+        echo '<table class="tb2">';
+        foreach($items as $k => $v) {
+            $value = '';
+            if(!empty($error_msg)) {
+                $value = isset($_POST[$key][$k]) ? $_POST[$key][$k] : '';
+            }
+            if(empty($value)) {
+                if(isset($v['value']) && is_array($v['value'])) {
+                    if($v['value']['type'] == 'constant') {
+                        $value = defined($v['value']['var']) ? constant($v['value']['var']) : $v['value']['var'];
+                    } else {
+                        $value = $GLOBALS[$v['value']['var']];
+                    }
+                } else {
+                    $value = '';
+                }
+            }
+
+            if($k == 'ucurl' && isset($uc_info_transfer['ucapi'])) {
+                $value = $uc_info_transfer['ucapi'];
+            } elseif($k == 'ucpw' && isset($uc_info_transfer['ucfounderpw'])) {
+                $value = $uc_info_transfer['ucfounderpw'];
+            } elseif($k == 'ucip') {
+                $value = '';
+            }
+
+            show_setting($k, $key.'['.$k.']', $value, $v['type'], isset($error_msg[$key][$k]) ? $key.'_'.$k.'_invalid' : '');
+        }
+
+        if($is_first) {
+            $is_first = 0;
+        }
+    }
+    echo '</table>';
+    echo '</div>';
+    echo '<table class="tb2">';
+    show_setting('', 'submitname', 'new_step', ($step == 2 ? 'submit|oldbtn' : 'submit' ));
+    show_setting('end');
+    show_footer();
+}
+
+function show_setting($setname, $varname = '', $value = '', $type = 'text|password|checkbox', $error = '') {
+    if($setname == 'start') {
+        echo "<form method=\"post\" action=\"index.php\">\n";
+        return;
+    } elseif($setname == 'end') {
+        echo "\n</table>\n</form>\n";
+        return;
+    } elseif($setname == 'hidden') {
+        echo "<input type=\"hidden\" name=\"$varname\" value=\"$value\">\n";
+        return;
+    }
+
+    echo "\n".'<tr><th class="tbopt'.($error ? ' red' : '').'" align="left">&nbsp;'.(empty($setname) ? '' : lang($setname).':')."</th>\n<td>";
+    if($type == 'text' || $type == 'password') {
+        $value = dhtmlspecialchars($value);
+        echo "<input type=\"$type\" name=\"$varname\" value=\"$value\" size=\"35\" class=\"txt\">";
+    } elseif(strpos($type, 'submit') !== FALSE) {
+        if(strpos($type, 'oldbtn') !== FALSE) {
+            echo "<input type=\"button\" name=\"oldbtn\" value=\"".lang('old_step')."\" class=\"btn\" onclick=\"history.back();\">\n";
+        }
+        $value = empty($value) ? 'next_step' : $value;
+        echo "<input type=\"submit\" name=\"$varname\" value=\"".lang($value)."\" class=\"btn\">\n";
+    } elseif($type == 'checkbox') {
+        if(!is_array($varname) && !is_array($value)) {
+            echo "<label><input type=\"checkbox\" name=\"$varname\" value=\"1\"".($value ? 'checked="checked"' : '')."style=\"border: 0\">".lang($setname.'_check_label')."</label>\n";
+        }
+    } else {
+        echo $value;
+    }
+
+    echo "</td>\n<td>";
+    if($error) {
+        $comment = '<span class="red">'.(is_string($error) ? lang($error) : lang($setname.'_error')).'</span>';
+    } else {
+        $comment = lang($setname.'_comment', false);
+    }
+    echo "$comment</td>\n</tr>\n";
+    return true;
+}
