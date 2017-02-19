@@ -199,3 +199,158 @@ function dir_writeable($dir) {
     }
     return $writeable;
 }
+
+function show_env_result(&$env_items, &$dirfile_items, &$func_items, &$filesock_items) {
+
+    $env_str = $file_str = $dir_str = $func_str = '';
+    $error_code = 0;
+
+    foreach($env_items as $key => $item) {
+        if($key == 'php' && strcmp($item['current'], $item['r']) < 0) {
+            show_msg('php_version_too_low', $item['current'], 0);
+        }
+        $status = 1;
+        if($item['r'] != 'notset') {
+            if(intval($item['current']) && intval($item['r'])) {
+                if(intval($item['current']) < intval($item['r'])) {
+                    $status = 0;
+                    $error_code = ENV_CHECK_ERROR;
+                }
+            } else {
+                if(strcmp($item['current'], $item['r']) < 0) {
+                    $status = 0;
+                    $error_code = ENV_CHECK_ERROR;
+                }
+            }
+        }
+        if(VIEW_OFF) {
+            $env_str .= "\t\t<runCondition name=\"$key\" status=\"$status\" Require=\"$item[r]\" Best=\"$item[b]\" Current=\"$item[current]\"/>\n";
+        } else {
+            $env_str .= "<tr>\n";
+            $env_str .= "<td>".lang($key)."</td>\n";
+            $env_str .= "<td class=\"padleft\">".lang($item['r'])."</td>\n";
+            $env_str .= "<td class=\"padleft\">".lang($item['b'])."</td>\n";
+            $env_str .= ($status ? "<td class=\"w pdleft1\">" : "<td class=\"nw pdleft1\">").$item['current']."</td>\n";
+            $env_str .= "</tr>\n";
+        }
+    }
+
+    foreach($dirfile_items as $key => $item) {
+        $tagname = $item['type'] == 'file' ? 'File' : 'Dir';
+        $variable = $item['type'].'_str';
+
+        if(VIEW_OFF) {
+            if($item['status'] == 0) {
+                $error_code = ENV_CHECK_ERROR;
+            }
+            $$variable .= "\t\t\t<File name=\"$item[path]\" status=\"$item[status]\" requirePermisson=\"+r+w\" currentPermisson=\"$item[current]\" />\n";
+        } else {
+            $$variable .= "<tr>\n";
+            $$variable .= "<td>$item[path]</td><td class=\"w pdleft1\">".lang('writeable')."</td>\n";
+            if($item['status'] == 1) {
+                $$variable .= "<td class=\"w pdleft1\">".lang('writeable')."</td>\n";
+            } elseif($item['status'] == -1) {
+                $error_code = ENV_CHECK_ERROR;
+                $$variable .= "<td class=\"nw pdleft1\">".lang('nodir')."</td>\n";
+            } else {
+                $error_code = ENV_CHECK_ERROR;
+                $$variable .= "<td class=\"nw pdleft1\">".lang('unwriteable')."</td>\n";
+            }
+            $$variable .= "</tr>\n";
+        }
+    }
+
+    if(VIEW_OFF) {
+
+        $str = "<root>\n";
+        $str .= "\t<runConditions>\n";
+        $str .= $env_str;
+        $str .= "\t</runConditions>\n";
+        $str .= "\t<FileDirs>\n";
+        $str .= "\t\t<Dirs>\n";
+        $str .= $dir_str;
+        $str .= "\t\t</Dirs>\n";
+        $str .= "\t\t<Files>\n";
+        $str .= $file_str;
+        $str .= "\t\t</Files>\n";
+        $str .= "\t</FileDirs>\n";
+        $str .= "\t<error errorCode=\"$error_code\" errorMessage=\"\" />\n";
+        $str .= "</root>";
+        echo $str;
+        exit;
+
+    } else {
+
+        show_header();
+
+        echo "<h2 class=\"title\">".lang('env_check')."</h2>\n";
+        echo "<table class=\"tb\" style=\"margin:20px 0 20px 55px;\">\n";
+        echo "<tr>\n";
+        echo "\t<th>".lang('project')."</th>\n";
+        echo "\t<th class=\"padleft\">".lang('ucenter_required')."</th>\n";
+        echo "\t<th class=\"padleft\">".lang('ucenter_best')."</th>\n";
+        echo "\t<th class=\"padleft\">".lang('curr_server')."</th>\n";
+        echo "</tr>\n";
+        echo $env_str;
+        echo "</table>\n";
+
+        echo "<h2 class=\"title\">".lang('priv_check')."</h2>\n";
+        echo "<table class=\"tb\" style=\"margin:20px 0 20px 55px;width:90%;\">\n";
+        echo "\t<tr>\n";
+        echo "\t<th>".lang('step1_file')."</th>\n";
+        echo "\t<th class=\"padleft\">".lang('step1_need_status')."</th>\n";
+        echo "\t<th class=\"padleft\">".lang('step1_status')."</th>\n";
+        echo "</tr>\n";
+        echo $file_str;
+        echo $dir_str;
+        echo "</table>\n";
+
+        foreach($func_items as $item) {
+            $status = function_exists($item);
+            $func_str .= "<tr>\n";
+            $func_str .= "<td>$item()</td>\n";
+            if($status) {
+                $func_str .= "<td class=\"w pdleft1\">".lang('supportted')."</td>\n";
+                $func_str .= "<td class=\"padleft\">".lang('none')."</td>\n";
+            } else {
+                $error_code = ENV_CHECK_ERROR;
+                $func_str .= "<td class=\"nw pdleft1\">".lang('unsupportted')."</td>\n";
+                $func_str .= "<td><font color=\"red\">".lang('advice_'.$item)."</font></td>\n";
+            }
+        }
+        $func_strextra = '';
+        $filesock_disabled = 0;
+        foreach($filesock_items as $item) {
+            $status = function_exists($item);
+            $func_strextra .= "<tr>\n";
+            $func_strextra .= "<td>$item()</td>\n";
+            if($status) {
+                $func_strextra .= "<td class=\"w pdleft1\">".lang('supportted')."</td>\n";
+                $func_strextra .= "<td class=\"padleft\">".lang('none')."</td>\n";
+                break;
+            } else {
+                $filesock_disabled++;
+                $func_strextra .= "<td class=\"nw pdleft1\">".lang('unsupportted')."</td>\n";
+                $func_strextra .= "<td><font color=\"red\">".lang('advice_'.$item)."</font></td>\n";
+            }
+        }
+        if($filesock_disabled == count($filesock_items)) {
+            $error_code = ENV_CHECK_ERROR;
+        }
+        echo "<h2 class=\"title\">".lang('func_depend')."</h2>\n";
+        echo "<table class=\"tb\" style=\"margin:20px 0 20px 55px;width:90%;\">\n";
+        echo "<tr>\n";
+        echo "\t<th>".lang('func_name')."</th>\n";
+        echo "\t<th class=\"padleft\">".lang('check_result')."</th>\n";
+        echo "\t<th class=\"padleft\">".lang('suggestion')."</th>\n";
+        echo "</tr>\n";
+        echo $func_str.$func_strextra;
+        echo "</table>\n";
+
+        show_next_step(2, $error_code);
+
+        show_footer();
+
+    }
+
+}
