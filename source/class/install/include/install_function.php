@@ -101,3 +101,7 @@ EOT;
 
     $step > 0 && show_step($step);
 }
+
+function lang($lang_key, $force = true) {
+    return isset($GLOBALS['lang'][$lang_key]) ? $GLOBALS['lang'][$lang_key] : ($force ? $lang_key : '');
+}
