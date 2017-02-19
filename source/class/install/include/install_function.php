@@ -839,3 +839,10 @@ function runucquery($sql, $tablepre) {
     }
 
 }
+
+function showjsmessage($message) {
+    if(VIEW_OFF) return;
+    echo '<script type="text/javascript">showmessage(\''.addslashes($message).' \');</script>'."\r\n";
+    flush();
+    ob_flush();
+}
