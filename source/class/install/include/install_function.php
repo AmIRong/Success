@@ -1066,3 +1066,12 @@ function install_testdata($username, $uid) {
         }
     }
 }
+
+function loginit($logfile) {
+    global $lang;
+    showjsmessage($lang['init_log'].' '.$logfile);
+    if($fp = @fopen('./forumdata/logs/'.$logfile.'.php', 'w')) {
+        fwrite($fp, '<'.'?PHP exit(); ?'.">\n");
+        fclose($fp);
+    }
+}
