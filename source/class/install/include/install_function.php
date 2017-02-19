@@ -182,3 +182,20 @@ function dirfile_check(&$dirfile_items) {
         }
     }
 }
+
+function dir_writeable($dir) {
+    $writeable = 0;
+    if(!is_dir($dir)) {
+        @mkdir($dir, 0777);
+    }
+    if(is_dir($dir)) {
+        if($fp = @fopen("$dir/test.txt", 'w')) {
+            @fclose($fp);
+            @unlink("$dir/test.txt");
+            $writeable = 1;
+        } else {
+            $writeable = 0;
+        }
+    }
+    return $writeable;
+}
