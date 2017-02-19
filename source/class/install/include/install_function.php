@@ -977,3 +977,11 @@ function runquery($sql) {
     }
 
 }
+
+function install_extra_setting() {
+    global $db, $tablepre, $lang;
+    include ROOT_PATH.'./install/include/install_extvar.php';
+    foreach($settings as $key => $val) {
+        $db->query("REPLACE INTO {$tablepre}common_setting SET skey='$key', svalue='".addslashes(serialize($val))."'");
+    }
+}
