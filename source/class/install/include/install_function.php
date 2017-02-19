@@ -66,3 +66,38 @@ EOT;
 
     }
 }
+
+function show_header() {
+    define('SHOW_HEADER', TRUE);
+    global $step;
+    $version = DISCUZ_VERSION;
+    $release = DISCUZ_RELEASE;
+    $install_lang = lang(INSTALL_LANG);
+    $title = lang('title_install');
+    $charset = CHARSET;
+    echo <<<EOT
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=$charset" />
+<title>$title</title>
+<link rel="stylesheet" href="images/style.css" type="text/css" media="all" />
+<script type="text/javascript">
+	function $(id) {
+		return document.getElementById(id);
+	}
+
+	function showmessage(message) {
+		document.getElementById('notice').innerHTML += message + '<br />';
+	}
+</script>
+<meta content="Comsenz Inc." name="Copyright" />
+</head>
+<div class="container">
+	<div class="header">
+		<h1>$title</h1>
+		<span>Discuz!$version $install_lang $release</span>
+EOT;
+
+    $step > 0 && show_step($step);
+}
