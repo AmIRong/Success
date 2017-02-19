@@ -804,3 +804,38 @@ function _generate_key() {
     }
     return implode('', $return);
 }
+
+function runucquery($sql, $tablepre) {
+    global $lang, $db;
+
+    if(!isset($sql) || empty($sql)) return;
+
+    $sql = str_replace("\r", "\n", str_replace(' uc_', ' '.$tablepre, $sql));
+    $ret = array();
+    $num = 0;
+    foreach(explode(";\n", trim($sql)) as $query) {
+        $ret[$num] = '';
+        $queries = explode("\n", trim($query));
+        foreach($queries as $query) {
+            $ret[$num] .= (isset($query[0]) && $query[0] == '#') || (isset($query[1]) && isset($query[1]) && $query[0].$query[1] == '--') ? '' : $query;
+        }
+        $num++;
+    }
+    unset($sql);
+
+    foreach($ret as $query) {
+        $query = trim($query);
+        if($query) {
+
+            if(substr($query, 0, 12) == 'CREATE TABLE') {
+                $name = preg_replace("/CREATE TABLE ([a-z0-9_]+) .*/is", "\\1", $query);
+                showjsmessage(lang('create_table').' '.$name.' ... '.lang('succeed'));
+                $db->query(createtable($query, $db->version()));
+            } else {
+                $db->query($query);
+            }
+
+        }
+    }
+
+}
