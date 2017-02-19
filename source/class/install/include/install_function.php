@@ -854,3 +854,45 @@ function createtable($sql, $dbver) {
     return preg_replace("/^\s*(CREATE TABLE\s+.+\s+\(.+?\)).*$/isU", "\\1", $sql).
     ($dbver > '4.1' ? " ENGINE=$type DEFAULT CHARSET=".DBCHARSET : " TYPE=$type");
 }
+
+function save_uc_config($config, $file) {
+
+    $success = false;
+
+    list($appauthkey, $appid, $ucdbhost, $ucdbname, $ucdbuser, $ucdbpw, $ucdbcharset, $uctablepre, $uccharset, $ucapi, $ucip) = $config;
+
+    $link = function_exists('mysql_connect') ? mysql_connect($ucdbhost, $ucdbuser, $ucdbpw, 1) : new mysqli($ucdbhost, $ucdbuser, $ucdbpw, $ucdbname);
+    $uc_connnect = $link ? 'mysql' : '';
+
+    $date = gmdate("Y-m-d H:i:s", time() + 3600 * 8);
+    $year = date('Y');
+    $config = <<<EOT
+<?php
+
+
+define('UC_CONNECT', '$uc_connnect');
+
+define('UC_DBHOST', '$ucdbhost');
+define('UC_DBUSER', '$ucdbuser');
+define('UC_DBPW', '$ucdbpw');
+define('UC_DBNAME', '$ucdbname');
+define('UC_DBCHARSET', '$ucdbcharset');
+define('UC_DBTABLEPRE', '`$ucdbname`.$uctablepre');
+define('UC_DBCONNECT', 0);
+
+define('UC_CHARSET', '$uccharset');
+define('UC_KEY', '$appauthkey');
+define('UC_API', '$ucapi');
+define('UC_APPID', '$appid');
+define('UC_IP', '$ucip');
+define('UC_PPP', 20);
+?>
+EOT;
+
+    if($fp = fopen($file, 'w')) {
+        fwrite($fp, $config);
+        fclose($fp);
+        $success = true;
+    }
+    return $success;
+}
