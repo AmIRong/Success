@@ -408,3 +408,4 @@ function show_next_step($step, $error_code) {
     echo "<div class=\"btnbox marginbot\">".$nextstep."</div>\n";
     echo "</form>\n";
 }
+
