@@ -678,3 +678,32 @@ function getvars($data, $type = 'VAR') {
     }
     return $evaluate;
 }
+
+function buildarray($array, $level = 0, $pre = '$_config') {
+    static $ks;
+    if($level == 0) {
+        $ks = array();
+        $return = '';
+    }
+
+    foreach ($array as $key => $val) {
+        if($level == 0) {
+            $newline = str_pad('  CONFIG '.strtoupper($key).'  ', 70, '-', STR_PAD_BOTH);
+            $return .= "\r\n// $newline //\r\n";
+            if($key == 'admincp') {
+                $newline = str_pad(' Founders: $_config[\'admincp\'][\'founder\'] = \'1,2,3\'; ', 70, '-', STR_PAD_BOTH);
+                $return .= "// $newline //\r\n";
+            }
+        }
+
+        $ks[$level] = $ks[$level - 1]."['$key']";
+        if(is_array($val)) {
+            $ks[$level] = $ks[$level - 1]."['$key']";
+            $return .= buildarray($val, $level + 1, $pre);
+        } else {
+            $val =  is_string($val) || strlen($val) > 12 || !preg_match("/^\-?[1-9]\d*$/", $val) ? '\''.addcslashes($val, '\'\\').'\'' : $val;
+            $return .= $pre.$ks[$level - 1]."['$key']"." = $val;\r\n";
+        }
+    }
+    return $return;
+}
