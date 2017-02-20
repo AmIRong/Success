@@ -87,4 +87,11 @@ class db_driver_mysql
         }
         return $link;
     }
+    
+    function version() {
+        if(empty($this->version)) {
+            $this->version = mysql_get_server_info($this->curlink);
+        }
+        return $this->version;
+    }
 }
