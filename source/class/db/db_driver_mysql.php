@@ -65,4 +65,26 @@ class db_driver_mysql
     function errno() {
         return intval(($this->curlink) ? mysql_errno($this->curlink) : mysql_errno());
     }
+    
+    function _dbconnect($dbhost, $dbuser, $dbpw, $dbcharset, $dbname, $pconnect, $halt = true) {
+    
+        if($pconnect) {
+            $link = @mysql_pconnect($dbhost, $dbuser, $dbpw, MYSQL_CLIENT_COMPRESS);
+        } else {
+            $link = @mysql_connect($dbhost, $dbuser, $dbpw, 1, MYSQL_CLIENT_COMPRESS);
+        }
+        if(!$link) {
+            $halt && $this->halt('notconnect', $this->errno());
+        } else {
+            $this->curlink = $link;
+            if($this->version() > '4.1') {
+                $dbcharset = $dbcharset ? $dbcharset : $this->config[1]['dbcharset'];
+                $serverset = $dbcharset ? 'character_set_connection='.$dbcharset.', character_set_results='.$dbcharset.', character_set_client=binary' : '';
+                $serverset .= $this->version() > '5.0.1' ? ((empty($serverset) ? '' : ',').'sql_mode=\'\'') : '';
+                $serverset && mysql_query("SET $serverset", $link);
+            }
+            $dbname && @mysql_select_db($dbname, $link);
+        }
+        return $link;
+    }
 }
