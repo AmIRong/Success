@@ -57,4 +57,8 @@ class db_driver_mysql
     function halt($message = '', $code = 0, $sql = '') {
         throw new DbException($message, $code, $sql);
     }
+    
+    function error() {
+        return (($this->curlink) ? mysql_error($this->curlink) : mysql_error());
+    }
 }
