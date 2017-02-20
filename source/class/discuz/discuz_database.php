@@ -25,6 +25,10 @@ class discuz_database {
         return self::$db->errno();
     }
     
+    public static function table($table) {
+        return self::$db->table_name($table);
+    }
+    
     public static function query($sql, $arg = array(), $silent = false, $unbuffered = false) {
         if (!empty($arg)) {
             if (is_array($arg)) {
