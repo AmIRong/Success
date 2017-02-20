@@ -15,4 +15,39 @@ class discuz_memory extends discuz_base
         $this->extension['wincache'] = function_exists('wincache_ucache_meminfo') && wincache_ucache_meminfo();
     }
     
+    public function init($config) {
+        $this->config = $config;
+        $this->prefix = empty($config['prefix']) ? substr(md5($_SERVER['HTTP_HOST']), 0, 6).'_' : $config['prefix'];
+    
+    
+        if($this->extension['redis'] && !empty($config['redis']['server'])) {
+            $this->memory = new memory_driver_redis();
+            $this->memory->init($this->config['redis']);
+            if(!$this->memory->enable) {
+                $this->memory = null;
+            }
+        }
+    
+        if($this->extension['memcache'] && !empty($config['memcache']['server'])) {
+            $this->memory = new memory_driver_memcache();
+            $this->memory->init($this->config['memcache']);
+            if(!$this->memory->enable) {
+                $this->memory = null;
+            }
+        }
+    
+        foreach(array('apc', 'eaccelerator', 'xcache', 'wincache') as $cache) {
+            if(!is_object($this->memory) && $this->extension[$cache] && $this->config[$cache]) {
+                $class_name = 'memory_driver_'.$cache;
+                $this->memory = new $class_name();
+                $this->memory->init(null);
+            }
+        }
+    
+        if(is_object($this->memory)) {
+            $this->enable = true;
+            $this->type = str_replace('memory_driver_', '', get_class($this->memory));
+        }
+    
+    }
 }
