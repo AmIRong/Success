@@ -114,4 +114,29 @@ class discuz_database {
         }
         return $field;
     }
+    
+    public static function quote($str, $noarray = false) {
+    
+        if (is_string($str))
+            return '\'' . mysql_escape_string($str) . '\'';
+    
+            if (is_int($str) or is_float($str))
+                return '\'' . $str . '\'';
+    
+                if (is_array($str)) {
+                    if($noarray === false) {
+                        foreach ($str as &$v) {
+                            $v = self::quote($v, true);
+                        }
+                        return $str;
+                    } else {
+                        return '\'\'';
+                    }
+                }
+    
+                if (is_bool($str))
+                    return $str ? '1' : '0';
+    
+                    return '\'\'';
+    }
 }
