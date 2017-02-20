@@ -20,4 +20,8 @@ class discuz_database {
     public static function error() {
         return self::$db->error();
     }
+    
+    public static function errno() {
+        return self::$db->errno();
+    }
 }
