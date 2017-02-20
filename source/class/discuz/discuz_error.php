@@ -178,4 +178,11 @@ EOT;
         $exit && exit();
     
     }
+    
+    public static function sql_clear($message) {
+        $message = self::clear($message);
+        $message = str_replace(DB::object()->tablepre, '', $message);
+        $message = dhtmlspecialchars($message);
+        return $message;
+    }
 }
