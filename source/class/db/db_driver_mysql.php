@@ -53,4 +53,8 @@ class db_driver_mysql
         $this->curlink = $this->link[$serverid];
     
     }
+    
+    function halt($message = '', $code = 0, $sql = '') {
+        throw new DbException($message, $code, $sql);
+    }
 }
