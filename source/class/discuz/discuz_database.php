@@ -16,4 +16,8 @@ class discuz_database {
     public static function object() {
         return self::$db;
     }
+    
+    public static function error() {
+        return self::$db->error();
+    }
 }
