@@ -137,3 +137,69 @@ function setglobal($key , $value, $group = null) {
     return true;
 }
 
+function lang($file, $langvar = null, $vars = array(), $default = null) {
+    global $_G;
+    $fileinput = $file;
+    list($path, $file) = explode('/', $file);
+    if(!$file) {
+        $file = $path;
+        $path = '';
+    }
+    if(strpos($file, ':') !== false) {
+        $path = 'plugin';
+        list($file) = explode(':', $file);
+    }
+
+    if($path != 'plugin') {
+        $key = $path == '' ? $file : $path.'_'.$file;
+        if(!isset($_G['lang'][$key])) {
+            include DISCUZ_ROOT.'./source/language/'.($path == '' ? '' : $path.'/').'lang_'.$file.'.php';
+            $_G['lang'][$key] = $lang;
+        }
+        if(defined('IN_MOBILE') && !defined('TPL_DEFAULT')) {
+            include DISCUZ_ROOT.'./source/language/mobile/lang_template.php';
+            $_G['lang'][$key] = array_merge($_G['lang'][$key], $lang);
+        }
+        if($file != 'error' && !isset($_G['cache']['pluginlanguage_system'])) {
+            loadcache('pluginlanguage_system');
+        }
+        if(!isset($_G['hooklang'][$fileinput])) {
+            if(isset($_G['cache']['pluginlanguage_system'][$fileinput]) && is_array($_G['cache']['pluginlanguage_system'][$fileinput])) {
+                $_G['lang'][$key] = array_merge($_G['lang'][$key], $_G['cache']['pluginlanguage_system'][$fileinput]);
+            }
+            $_G['hooklang'][$fileinput] = true;
+        }
+        $returnvalue = &$_G['lang'];
+    } else {
+        if(empty($_G['config']['plugindeveloper'])) {
+            loadcache('pluginlanguage_script');
+        } elseif(!isset($_G['cache']['pluginlanguage_script'][$file]) && preg_match("/^[a-z]+[a-z0-9_]*$/i", $file)) {
+            if(@include(DISCUZ_ROOT.'./data/plugindata/'.$file.'.lang.php')) {
+                $_G['cache']['pluginlanguage_script'][$file] = $scriptlang[$file];
+            } else {
+                loadcache('pluginlanguage_script');
+            }
+        }
+        $returnvalue = & $_G['cache']['pluginlanguage_script'];
+        $key = &$file;
+    }
+    $return = $langvar !== null ? (isset($returnvalue[$key][$langvar]) ? $returnvalue[$key][$langvar] : null) : $returnvalue[$key];
+    $return = $return === null ? ($default !== null ? $default : $langvar) : $return;
+    $searchs = $replaces = array();
+    if($vars && is_array($vars)) {
+        foreach($vars as $k => $v) {
+            $searchs[] = '{'.$k.'}';
+            $replaces[] = $v;
+        }
+    }
+    if(is_string($return) && strpos($return, '{_G/') !== false) {
+        preg_match_all('/\{_G\/(.+?)\}/', $return, $gvar);
+        foreach($gvar[0] as $k => $v) {
+            $searchs[] = $v;
+            $replaces[] = getglobal($gvar[1][$k]);
+        }
+    }
+    $return = str_replace($searchs, $replaces, $return);
+    return $return;
+}
+
