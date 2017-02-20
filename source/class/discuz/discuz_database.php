@@ -55,4 +55,50 @@ class discuz_database {
         }
         return $ret;
     }
+    
+    public static function field($field, $val, $glue = '=') {
+    
+        $field = self::quote_field($field);
+    
+        if (is_array($val)) {
+            $glue = $glue == 'notin' ? 'notin' : 'in';
+        } elseif ($glue == 'in') {
+            $glue = '=';
+        }
+    
+        switch ($glue) {
+            case '=':
+                return $field . $glue . self::quote($val);
+                break;
+            case '-':
+            case '+':
+                return $field . '=' . $field . $glue . self::quote((string) $val);
+                break;
+            case '|':
+            case '&':
+            case '^':
+                return $field . '=' . $field . $glue . self::quote($val);
+                break;
+            case '>':
+            case '<':
+            case '<>':
+            case '<=':
+            case '>=':
+                return $field . $glue . self::quote($val);
+                break;
+    
+            case 'like':
+                return $field . ' LIKE(' . self::quote($val) . ')';
+                break;
+    
+            case 'in':
+            case 'notin':
+                $val = $val ? implode(',', self::quote($val)) : '\'\'';
+                return $field . ($glue == 'notin' ? ' NOT' : '') . ' IN(' . $val . ')';
+                break;
+    
+            default:
+                throw new DbException('Not allow this glue between field and value: "' . $glue . '"');
+        }
+    }
 }
