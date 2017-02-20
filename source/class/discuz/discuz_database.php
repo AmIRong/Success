@@ -101,4 +101,17 @@ class discuz_database {
                 throw new DbException('Not allow this glue between field and value: "' . $glue . '"');
         }
     }
+    
+    public static function quote_field($field) {
+        if (is_array($field)) {
+            foreach ($field as $k => $v) {
+                $field[$k] = self::quote_field($v);
+            }
+        } else {
+            if (strpos($field, '`') !== false)
+                $field = str_replace('`', '', $field);
+                $field = '`' . $field . '`';
+        }
+        return $field;
+    }
 }
