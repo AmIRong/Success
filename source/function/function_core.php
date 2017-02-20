@@ -203,3 +203,34 @@ function lang($file, $langvar = null, $vars = array(), $default = null) {
     return $return;
 }
 
+function loadcache($cachenames, $force = false) {
+    global $_G;
+    static $loadedcache = array();
+    $cachenames = is_array($cachenames) ? $cachenames : array($cachenames);
+    $caches = array();
+    foreach ($cachenames as $k) {
+        if(!isset($loadedcache[$k]) || $force) {
+            $caches[] = $k;
+            $loadedcache[$k] = true;
+        }
+    }
+
+    if(!empty($caches)) {
+        $cachedata = C::t('common_syscache')->fetch_all($caches);
+        foreach($cachedata as $cname => $data) {
+            if($cname == 'setting') {
+                $_G['setting'] = $data;
+            } elseif($cname == 'usergroup_'.$_G['groupid']) {
+                $_G['cache'][$cname] = $_G['group'] = $data;
+            } elseif($cname == 'style_default') {
+                $_G['cache'][$cname] = $_G['style'] = $data;
+            } elseif($cname == 'grouplevels') {
+                $_G['grouplevels'] = $data;
+            } else {
+                $_G['cache'][$cname] = $data;
+            }
+        }
+    }
+    return true;
+}
+
