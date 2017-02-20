@@ -35,4 +35,22 @@ class db_driver_mysql
             }
         }
     }
+    
+    function connect($serverid = 1) {
+    
+        if(empty($this->config) || empty($this->config[$serverid])) {
+            $this->halt('config_db_not_found');
+        }
+    
+        $this->link[$serverid] = $this->_dbconnect(
+            $this->config[$serverid]['dbhost'],
+            $this->config[$serverid]['dbuser'],
+            $this->config[$serverid]['dbpw'],
+            $this->config[$serverid]['dbcharset'],
+            $this->config[$serverid]['dbname'],
+            $this->config[$serverid]['pconnect']
+            );
+        $this->curlink = $this->link[$serverid];
+    
+    }
 }
