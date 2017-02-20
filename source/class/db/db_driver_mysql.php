@@ -61,4 +61,8 @@ class db_driver_mysql
     function error() {
         return (($this->curlink) ? mysql_error($this->curlink) : mysql_error());
     }
+    
+    function errno() {
+        return intval(($this->curlink) ? mysql_errno($this->curlink) : mysql_errno());
+    }
 }
