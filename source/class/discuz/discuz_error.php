@@ -185,4 +185,8 @@ EOT;
         $message = dhtmlspecialchars($message);
         return $message;
     }
+    
+    public static function clear($message) {
+        return str_replace(array("\t", "\r", "\n"), " ", $message);
+    }
 }
