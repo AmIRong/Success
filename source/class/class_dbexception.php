@@ -12,5 +12,9 @@ class DbException extends Exception{
         $this->sql = $sql;
         parent::__construct($message, $code);
     }
+    
+    public function getSql() {
+        return $this->sql;
+    }
 }
 ?>
