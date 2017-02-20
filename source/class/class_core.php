@@ -27,6 +27,8 @@ class core
 {
     private static $_imports;
     private static $_app;
+    private static $_tables;
+    private static $_memory;
     public static function autoload($class) {
         $class = strtolower($class);
         if(strpos($class, '_') !== false) {
@@ -136,6 +138,14 @@ class core
             }
         }
         return self::$_tables[$cname];
+    }
+    
+    public static function memory() {
+        if(!self::$_memory) {
+            self::$_memory = new discuz_memory();
+            self::$_memory->init(self::app()->config['memory']);
+        }
+        return self::$_memory;
     }
 }
 
