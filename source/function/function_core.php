@@ -258,3 +258,22 @@ function memory($cmd, $key='', $value='', $ttl = 0, $prefix = '') {
     return null;
 }
 
+function getgpc($k, $type='GP') {
+    $type = strtoupper($type);
+    switch($type) {
+        case 'G': $var = &$_GET; break;
+        case 'P': $var = &$_POST; break;
+        case 'C': $var = &$_COOKIE; break;
+        default:
+            if(isset($_GET[$k])) {
+                $var = &$_GET;
+            } else {
+                $var = &$_POST;
+            }
+            break;
+    }
+
+    return isset($var[$k]) ? $var[$k] : NULL;
+
+}
+
