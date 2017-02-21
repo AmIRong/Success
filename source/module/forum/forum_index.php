@@ -13,7 +13,13 @@ if(!$_G['uid'] && !$gid && $_G['setting']['cacheindexlife'] && !defined('IN_ARCH
     get_index_page_guest_cache();
 }
 
+$newthreads = round((TIMESTAMP - $_G['member']['lastvisit'] + 600) / 1000) * 1000;
 
+$catlist = $forumlist = $sublist = $forumname = $collapse = $favforumlist = array();
+$threads = $posts = $todayposts = $announcepm = 0;
+$postdata = $_G['cache']['historyposts'] ? explode("\t", $_G['cache']['historyposts']) : array(0,0);
+$postdata[0] = intval($postdata[0]);
+$postdata[1] = intval($postdata[1]);
 
 function get_index_online_details() {
     $showoldetails = getgpc('showoldetails');
