@@ -145,4 +145,8 @@ class db_driver_mysql
         if($result_type == 'MYSQL_ASSOC') $result_type = MYSQL_ASSOC;
         return mysql_fetch_array($query, $result_type);
     }
+    
+    function free_result($query) {
+        return mysql_free_result($query);
+    }
 }
