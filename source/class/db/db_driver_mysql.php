@@ -94,4 +94,50 @@ class db_driver_mysql
         }
         return $this->version;
     }
+    
+    function table_name($tablename) {
+        if(!empty($this->map) && !empty($this->map[$tablename])) {
+            $id = $this->map[$tablename];
+            if(!$this->link[$id]) {
+                $this->connect($id);
+            }
+            $this->curlink = $this->link[$id];
+        } else {
+            $this->curlink = $this->link[1];
+        }
+        return $this->tablepre.$tablename;
+    }
+    
+    public function query($sql, $silent = false, $unbuffered = false) {
+        if(defined('DISCUZ_DEBUG') && DISCUZ_DEBUG) {
+            $starttime = microtime(true);
+        }
+    
+        if('UNBUFFERED' === $silent) {
+            $silent = false;
+            $unbuffered = true;
+        } elseif('SILENT' === $silent) {
+            $silent = true;
+            $unbuffered = false;
+        }
+    
+        $func = $unbuffered ? 'mysql_unbuffered_query' : 'mysql_query';
+    
+        if(!($query = $func($sql, $this->curlink))) {
+            if(in_array($this->errno(), array(2006, 2013)) && substr($silent, 0, 5) != 'RETRY') {
+                $this->connect();
+                return $this->query($sql, 'RETRY'.$silent);
+            }
+            if(!$silent) {
+                $this->halt($this->error(), $this->errno(), $sql);
+            }
+        }
+    
+        if(defined('DISCUZ_DEBUG') && DISCUZ_DEBUG) {
+            $this->sqldebug[] = array($sql, number_format((microtime(true) - $starttime), 6), debug_backtrace(), $this->curlink);
+        }
+    
+        $this->querynum++;
+        return $query;
+    }
 }
