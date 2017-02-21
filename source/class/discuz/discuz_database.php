@@ -154,6 +154,22 @@ class discuz_database {
         self::$db->free_result($res);
         return $ret ? $ret : array();
     }
+    
+    public static function free_result($query) {
+        return self::$db->free_result($query);
+    }
+    
+    public static function insert($table, $data, $return_insert_id = false, $replace = false, $silent = false) {
+    
+        $sql = self::implode($data);
+    
+        $cmd = $replace ? 'REPLACE INTO' : 'INSERT INTO';
+    
+        $table = self::table($table);
+        $silent = $silent ? 'SILENT' : '';
+    
+        return self::query("$cmd $table SET $sql", null, $silent, !$return_insert_id);
+    }
 }
 
 class discuz_database_safecheck {
