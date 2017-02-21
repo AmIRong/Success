@@ -33,4 +33,13 @@ class discuz_table extends discuz_base
         }
         return $data;
     }
+    
+    public function fetch_cache($ids, $pre_cache_key = null) {
+        $data = false;
+        if($this->_allowmem) {
+            if($pre_cache_key === null)	$pre_cache_key = $this->_pre_cache_key;
+            $data = memory('get', $ids, $pre_cache_key);
+        }
+        return $data;
+    }
 }
