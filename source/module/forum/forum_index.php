@@ -23,6 +23,19 @@ $postdata[1] = intval($postdata[1]);
 
 
 list($navtitle, $metadescription, $metakeywords) = get_seosetting('forum');
+
+if(!$navtitle) {
+    $navtitle = $_G['setting']['navs'][2]['navname'];
+    $nobbname = false;
+} else {
+    $nobbname = true;
+}
+if(!$metadescription) {
+    $metadescription = $navtitle;
+}
+if(!$metakeywords) {
+    $metakeywords = $navtitle;
+}
 function get_index_online_details() {
     $showoldetails = getgpc('showoldetails');
     switch($showoldetails) {
