@@ -277,3 +277,16 @@ function getgpc($k, $type='GP') {
 
 }
 
+function runhooks($scriptextra = '') {
+    if(!defined('HOOKTYPE')) {
+        define('HOOKTYPE', !defined('IN_MOBILE') ? 'hookscript' : 'hookscriptmobile');
+    }
+    if(defined('CURMODULE')) {
+        global $_G;
+        if($_G['setting']['plugins']['func'][HOOKTYPE]['common']) {
+            hookscript('common', 'global', 'funcs', array(), 'common');
+        }
+        hookscript(CURMODULE, $_G['basescript'], 'funcs', array(), '', $scriptextra);
+    }
+}
+
