@@ -4,6 +4,8 @@ if(!defined('IN_DISCUZ')) {
 }
 
 class discuz_application extends discuz_base{
+    var $init_setting = true;
+    var $init_cron = true;
     var $init_db = true;
     static function &instance() {
         static $object;
