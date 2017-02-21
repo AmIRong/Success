@@ -36,6 +36,12 @@ if(!$metadescription) {
 if(!$metakeywords) {
     $metakeywords = $navtitle;
 }
+
+if($_G['setting']['indexhot']['status'] && $_G['cache']['heats']['expiration'] < TIMESTAMP) {
+    require_once libfile('function/cache');
+    updatecache('heats');
+}
+
 function get_index_online_details() {
     $showoldetails = getgpc('showoldetails');
     switch($showoldetails) {
