@@ -605,4 +605,126 @@ class discuz_application extends discuz_base{
             }
         }
     }
+    
+    private function _init_misc() {
+    
+        if($this->config['security']['urlxssdefend'] && !defined('DISABLEXSSCHECK')) {
+            $this->_xss_check();
+        }
+    
+        if(!$this->init_misc) {
+            return false;
+        }
+        lang('core');
+    
+        if($this->init_setting && $this->init_user) {
+            if(!isset($this->var['member']['timeoffset']) || $this->var['member']['timeoffset'] == 9999 || $this->var['member']['timeoffset'] === '') {
+                $this->var['member']['timeoffset'] = $this->var['setting']['timeoffset'];
+            }
+        }
+    
+        $timeoffset = $this->init_setting ? $this->var['member']['timeoffset'] : $this->var['setting']['timeoffset'];
+        $this->var['timenow'] = array(
+            'time' => dgmdate(TIMESTAMP),
+            'offset' => $timeoffset >= 0 ? ($timeoffset == 0 ? '' : '+'.$timeoffset) : $timeoffset
+        );
+        $this->timezone_set($timeoffset);
+    
+        $this->var['formhash'] = formhash();
+        define('FORMHASH', $this->var['formhash']);
+    
+        if($this->init_user) {
+            $allowvisitflag = in_array(CURSCRIPT, array('member')) || defined('ALLOWGUEST') && ALLOWGUEST;
+            if($this->var['group'] && isset($this->var['group']['allowvisit']) && !$this->var['group']['allowvisit']) {
+                if($this->var['uid'] && !$allowvisitflag) {
+                    if(!defined('IN_MOBILE_API')) {
+                        showmessage('user_banned');
+                    } else {
+                        mobile_core::result(array('error' => 'user_banned'));
+                    }
+                } elseif((!defined('ALLOWGUEST') || !ALLOWGUEST) && !in_array(CURSCRIPT, array('member', 'api')) && !$this->var['inajax']) {
+                    if(!defined('IN_MOBILE_API')) {
+                        dheader('location: member.php?mod=logging&action=login&referer='.rawurlencode($this->var['siteurl'].$this->var['basefilename'].($_SERVER['QUERY_STRING'] ? '?'.$_SERVER['QUERY_STRING'] : '')));
+                    } else {
+                        mobile_core::result(array('error' => 'to_login'));
+                    }
+                }
+            }
+            if(isset($this->var['member']['status']) && $this->var['member']['status'] == -1 && !$allowvisitflag) {
+                if(!defined('IN_MOBILE_API')) {
+                    showmessage('user_banned');
+                } else {
+                    mobile_core::result(array('error' => 'user_banned'));
+                }
+            }
+        }
+    
+        if($this->var['setting']['ipaccess'] && !ipaccess($this->var['clientip'], $this->var['setting']['ipaccess'])) {
+            if(!defined('IN_MOBILE_API')) {
+                showmessage('user_banned');
+            } else {
+                mobile_core::result(array('error' => 'user_banned'));
+            }
+        }
+    
+        if($this->var['setting']['bbclosed']) {
+            if($this->var['uid'] && ($this->var['group']['allowvisit'] == 2 || $this->var['groupid'] == 1)) {
+            } elseif(in_array(CURSCRIPT, array('admin', 'member', 'api')) || defined('ALLOWGUEST') && ALLOWGUEST) {
+            } else {
+                $closedreason = C::t('common_setting')->fetch('closedreason');
+                $closedreason = str_replace(':', '&#58;', $closedreason);
+                if(!defined('IN_MOBILE_API')) {
+                    showmessage($closedreason ? $closedreason : 'board_closed', NULL, array('adminemail' => $this->var['setting']['adminemail']), array('login' => 1));
+                } else {
+                    mobile_core::result(array('error' => $closedreason ? $closedreason : 'board_closed'));
+                }
+            }
+        }
+    
+        if(CURSCRIPT != 'admin' && !(in_array($this->var['mod'], array('logging', 'seccode')))) {
+            periodscheck('visitbanperiods');
+        }
+    
+        if(defined('IN_MOBILE')) {
+            $this->var['tpp'] = $this->var['setting']['mobile']['mobiletopicperpage'] ? intval($this->var['setting']['mobile']['mobiletopicperpage']) : 20;
+            $this->var['ppp'] = $this->var['setting']['mobile']['mobilepostperpage'] ? intval($this->var['setting']['mobile']['mobilepostperpage']) : 5;
+        } else {
+            $this->var['tpp'] = $this->var['setting']['topicperpage'] ? intval($this->var['setting']['topicperpage']) : 20;
+            $this->var['ppp'] = $this->var['setting']['postperpage'] ? intval($this->var['setting']['postperpage']) : 10;
+        }
+    
+        if($this->var['setting']['nocacheheaders']) {
+            @header("Expires: -1");
+            @header("Cache-Control: no-store, private, post-check=0, pre-check=0, max-age=0", FALSE);
+            @header("Pragma: no-cache");
+        }
+    
+        if($this->session->isnew && $this->var['uid']) {
+            updatecreditbyaction('daylogin', $this->var['uid']);
+    
+            include_once libfile('function/stat');
+            updatestat('login', 1);
+            if(defined('IN_MOBILE')) {
+                updatestat('mobilelogin', 1);
+            }
+            if($this->var['setting']['connect']['allow'] && $this->var['member']['conisbind']) {
+                updatestat('connectlogin', 1);
+            }
+        }
+        if(isset($this->var['member']['conisbind']) && $this->var['member']['conisbind'] && $this->var['setting'] && $this->var['setting']['connect']['newbiespan'] !== '') {
+            $this->var['setting']['newbiespan'] = $this->var['setting']['connect']['newbiespan'];
+        }
+    
+        $lastact = TIMESTAMP."\t".dhtmlspecialchars(basename($this->var['PHP_SELF']))."\t".dhtmlspecialchars($this->var['mod']);
+        dsetcookie('lastact', $lastact, 86400);
+        setglobal('currenturl_encode', base64_encode('http://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI']));
+    
+        if((!empty($_GET['fromuid']) || !empty($_GET['fromuser'])) && ($this->var['setting']['creditspolicy']['promotion_visit'] || $this->var['setting']['creditspolicy']['promotion_register'])) {
+            require_once libfile('misc/promotion', 'include');
+        }
+    
+        $this->var['seokeywords'] = !empty($this->var['setting']['seokeywords'][CURSCRIPT]) ? $this->var['setting']['seokeywords'][CURSCRIPT] : '';
+        $this->var['seodescription'] = !empty($this->var['setting']['seodescription'][CURSCRIPT]) ? $this->var['setting']['seodescription'][CURSCRIPT] : '';
+    
+    }
 }
