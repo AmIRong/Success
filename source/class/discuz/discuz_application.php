@@ -594,5 +594,13 @@ class discuz_application extends discuz_base{
         unset($query_sting_tmp);
         ob_start();
     }
-
+    
+    private function _init_cron() {
+        $ext = empty($this->config['remote']['on']) || empty($this->config['remote']['cron']) || APPTYPEID == 200;
+        if($this->init_cron && $this->init_setting && $ext) {
+            if($this->var['cache']['cronnextrun'] <= TIMESTAMP) {
+                discuz_cron::run();
+            }
+        }
+    }
 }
