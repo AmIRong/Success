@@ -331,4 +331,268 @@ class discuz_application extends discuz_base{
             DB::init($driver, $this->config['db']);
         }
     }
+    
+    private function _init_setting() {
+        if($this->init_setting) {
+            if(empty($this->var['setting'])) {
+                $this->cachelist[] = 'setting';
+            }
+    
+            if(empty($this->var['style'])) {
+                $this->cachelist[] = 'style_default';
+            }
+    
+            if(!isset($this->var['cache']['cronnextrun'])) {
+                $this->cachelist[] = 'cronnextrun';
+            }
+        }
+    
+        !empty($this->cachelist) && loadcache($this->cachelist);
+    
+        if(!is_array($this->var['setting'])) {
+            $this->var['setting'] = array();
+        }
+    
+    }
+    
+    private function _init_user() {
+        if($this->init_user) {
+            if($auth = getglobal('auth', 'cookie')) {
+                $auth = daddslashes(explode("\t", authcode($auth, 'DECODE')));
+            }
+            list($discuz_pw, $discuz_uid) = empty($auth) || count($auth) < 2 ? array('', '') : $auth;
+    
+            if($discuz_uid) {
+                $user = getuserbyuid($discuz_uid, 1);
+            }
+    
+            if(!empty($user) && $user['password'] == $discuz_pw) {
+                if(isset($user['_inarchive'])) {
+                    C::t('common_member_archive')->move_to_master($discuz_uid);
+                }
+                $this->var['member'] = $user;
+            } else {
+                $user = array();
+                $this->_init_guest();
+            }
+    
+            if($user && $user['groupexpiry'] > 0 && $user['groupexpiry'] < TIMESTAMP) {
+                $memberfieldforum = C::t('common_member_field_forum')->fetch($discuz_uid);
+                $groupterms = dunserialize($memberfieldforum['groupterms']);
+                if(!empty($groupterms['main'])) {
+                    C::t("common_member")->update($user['uid'], array('groupexpiry'=> 0, 'groupid' => $groupterms['main']['groupid'], 'adminid' => $groupterms['main']['adminid']));
+                    $user['groupid'] = $groupterms['main']['groupid'];
+                    $user['adminid'] = $groupterms['main']['adminid'];
+                    unset($groupterms['main'], $groupterms['ext'][$this->var['member']['groupid']]);
+                    $this->var['member'] = $user;
+                    C::t('common_member_field_forum')->update($discuz_uid, array('groupterms' => serialize($groupterms)));
+                } elseif((getgpc('mod') != 'spacecp' || CURSCRIPT != 'home') && CURSCRIPT != 'member') {
+                    dheader('location: home.php?mod=spacecp&ac=usergroup&do=expiry');
+                }
+            }
+    
+            if($user && $user['freeze'] && (getgpc('mod') != 'spacecp' && getgpc('mod') != 'misc'  || CURSCRIPT != 'home') && CURSCRIPT != 'member' && CURSCRIPT != 'misc') {
+                dheader('location: home.php?mod=spacecp&ac=profile&op=password');
+            }
+    
+            $this->cachelist[] = 'usergroup_'.$this->var['member']['groupid'];
+            if($user && $user['adminid'] > 0 && $user['groupid'] != $user['adminid']) {
+                $this->cachelist[] = 'admingroup_'.$this->var['member']['adminid'];
+            }
+    
+        } else {
+            $this->_init_guest();
+        }
+        setglobal('groupid', getglobal('groupid', 'member'));
+        !empty($this->cachelist) && loadcache($this->cachelist);
+    
+        if($this->var['member'] && $this->var['group']['radminid'] == 0 && $this->var['member']['adminid'] > 0 && $this->var['member']['groupid'] != $this->var['member']['adminid'] && !empty($this->var['cache']['admingroup_'.$this->var['member']['adminid']])) {
+            $this->var['group'] = array_merge($this->var['group'], $this->var['cache']['admingroup_'.$this->var['member']['adminid']]);
+        }
+    
+        if($this->var['group']['allowmakehtml'] && isset($_GET['_makehtml'])) {
+            $this->var['makehtml'] = 1;
+            $this->_init_guest();
+            loadcache(array('usergroup_7'));
+            $this->var['group'] = $this->var['cache']['usergroup_7'];
+            unset($this->var['inajax']);
+        }
+    
+        if(empty($this->var['cookie']['lastvisit'])) {
+            $this->var['member']['lastvisit'] = TIMESTAMP - 3600;
+            dsetcookie('lastvisit', TIMESTAMP - 3600, 86400 * 30);
+        } else {
+            $this->var['member']['lastvisit'] = $this->var['cookie']['lastvisit'];
+        }
+    
+        setglobal('uid', getglobal('uid', 'member'));
+        setglobal('username', getglobal('username', 'member'));
+        setglobal('adminid', getglobal('adminid', 'member'));
+        setglobal('groupid', getglobal('groupid', 'member'));
+        if($this->var['member']['newprompt']) {
+            $this->var['member']['newprompt_num'] = C::t('common_member_newprompt')->fetch($this->var['member']['uid']);
+            $this->var['member']['newprompt_num'] = unserialize($this->var['member']['newprompt_num']['data']);
+            $this->var['member']['category_num'] = helper_notification::get_categorynum($this->var['member']['newprompt_num']);
+        }
+    
+    }
+    
+    private function _init_guest() {
+        $username = '';
+        $groupid = 7;
+        if(!empty($this->var['cookie']['con_auth_hash']) && ($openid = authcode($this->var['cookie']['con_auth_hash']))) {
+            $this->var['connectguest'] = 1;
+            $username = 'QQ_'.substr($openid, -6);
+            $this->var['setting']['cacheindexlife'] = 0;
+            $this->var['setting']['cachethreadlife'] = 0;
+            $groupid = $this->var['setting']['connect']['guest_groupid'] ? $this->var['setting']['connect']['guest_groupid'] : $this->var['setting']['newusergroupid'];
+        }
+        setglobal('member', array( 'uid' => 0, 'username' => $username, 'adminid' => 0, 'groupid' => $groupid, 'credits' => 0, 'timeoffset' => 9999));
+    }
+    
+    private function _init_session() {
+    
+        $sessionclose = !empty($this->var['setting']['sessionclose']);
+        $this->session = $sessionclose ? new discuz_session_close() : new discuz_session();
+    
+        if($this->init_session)	{
+            $this->session->init($this->var['cookie']['sid'], $this->var['clientip'], $this->var['uid']);
+            $this->var['sid'] = $this->session->sid;
+            $this->var['session'] = $this->session->var;
+    
+            if(!empty($this->var['sid']) && $this->var['sid'] != $this->var['cookie']['sid']) {
+                dsetcookie('sid', $this->var['sid'], 86400);
+            }
+    
+            if($this->session->isnew) {
+                if(ipbanned($this->var['clientip'])) {
+                    $this->session->set('groupid', 6);
+                }
+            }
+    
+            if($this->session->get('groupid') == 6) {
+                $this->var['member']['groupid'] = 6;
+                if(!defined('IN_MOBILE_API')) {
+                    sysmessage('user_banned');
+                } else {
+                    mobile_core::result(array('error' => 'user_banned'));
+                }
+            }
+    
+            if($this->var['uid'] && !$sessionclose && ($this->session->isnew || ($this->session->get('lastactivity') + 600) < TIMESTAMP)) {
+                $this->session->set('lastactivity', TIMESTAMP);
+                if($this->session->isnew) {
+                    if($this->var['member']['lastip'] && $this->var['member']['lastvisit']) {
+                        dsetcookie('lip', $this->var['member']['lastip'].','.$this->var['member']['lastvisit']);
+                    }
+                    C::t('common_member_status')->update($this->var['uid'], array('lastip' => $this->var['clientip'], 'port' => $this->var['remoteport'], 'lastvisit' => TIMESTAMP));
+                }
+            }
+    
+        }
+    }
+    
+    private function _init_mobile() {
+        if(!$this->init_mobile) {
+            return false;
+        }
+    
+        if(!$this->var['setting'] || !$this->var['setting']['mobile']['allowmobile'] || !is_array($this->var['setting']['mobile']) || IS_ROBOT) {
+            $nomobile = true;
+            $unallowmobile = true;
+        }
+    
+    
+        $mobile = getgpc('mobile');
+        $mobileflag = isset($this->var['mobiletpl'][$mobile]);
+        if($mobile === 'no') {
+            dsetcookie('mobile', 'no', 3600);
+            $nomobile = true;
+        } elseif($this->var['cookie']['mobile'] == 'no' && $mobileflag) {
+            checkmobile();
+            dsetcookie('mobile', '');
+        } elseif($this->var['cookie']['mobile'] == 'no') {
+            $nomobile = true;
+        } elseif(!($mobile_ = checkmobile())) {
+            $nomobile = true;
+        }
+        if(!$mobile || $mobile == 'yes') {
+            $mobile = isset($mobile_) ? $mobile_ : 2;
+        }
+    
+        if(!$this->var['mobile'] && !$unallowmobile) {
+            if($mobileflag) {
+                dheader("Location:misc.php?mod=mobile");
+            }
+        }
+    
+        if($nomobile || (!$this->var['setting']['mobile']['mobileforward'] && !$mobileflag)) {
+            if($_SERVER['HTTP_HOST'] == $this->var['setting']['domain']['app']['mobile'] && $this->var['setting']['domain']['app']['default']) {
+                dheader("Location:http://".$this->var['setting']['domain']['app']['default'].$_SERVER['REQUEST_URI']);
+                return false;
+            } else {
+                return false;
+            }
+        }
+    
+        if(strpos($this->var['setting']['domain']['defaultindex'], CURSCRIPT) !== false && CURSCRIPT != 'forum' && !$_GET['mod']) {
+            if($this->var['setting']['domain']['app']['mobile']) {
+                $mobileurl = 'http://'.$this->var['setting']['domain']['app']['mobile'];
+            } else {
+                if($this->var['setting']['domain']['app']['forum']) {
+                    $mobileurl = 'http://'.$this->var['setting']['domain']['app']['forum'].'?mobile=yes';
+                } else {
+                    $mobileurl = $this->var['siteurl'].'forum.php?mobile=yes';
+                }
+            }
+            dheader("location:$mobileurl");
+        }
+        if($mobile === '3' && empty($this->var['setting']['mobile']['wml'])) {
+            return false;
+        }
+        define('IN_MOBILE', isset($this->var['mobiletpl'][$mobile]) ? $mobile : '2');
+        setglobal('gzipcompress', 0);
+    
+        $arr = array();
+        foreach(array_keys($this->var['mobiletpl']) as $mobiletype) {
+            $arr[] = '&mobile='.$mobiletype;
+            $arr[] = 'mobile='.$mobiletype;
+        }
+        $arr = array_merge(array(strstr($_SERVER['QUERY_STRING'], '&simpletype'), strstr($_SERVER['QUERY_STRING'], 'simpletype')), $arr);
+        $query_sting_tmp = str_replace($arr, '', $_SERVER['QUERY_STRING']);
+        $this->var['setting']['mobile']['nomobileurl'] = ($this->var['setting']['domain']['app']['forum'] ? 'http://'.$this->var['setting']['domain']['app']['forum'].'/' : $this->var['siteurl']).$this->var['basefilename'].($query_sting_tmp ? '?'.$query_sting_tmp.'&' : '?').'mobile=no';
+    
+        $this->var['setting']['lazyload'] = 0;
+    
+        if('utf-8' != CHARSET) {
+            if(strtolower($_SERVER['REQUEST_METHOD']) === 'post') {
+                foreach($_POST AS $pk => $pv) {
+                    if(!is_numeric($pv)) {
+                        $_GET[$pk] = $_POST[$pk] = $this->mobile_iconv_recurrence($pv);
+                        if(!empty($this->var['config']['input']['compatible'])) {
+                            $this->var['gp_'.$pk] = daddslashes($_GET[$pk]);
+                        }
+                    }
+                }
+            }
+        }
+    
+    
+        if(!$this->var['setting']['mobile']['mobilesimpletype']) {
+            $this->var['setting']['imagemaxwidth'] = 224;
+        }
+    
+        $this->var['setting']['regstatus'] = $this->var['setting']['mobile']['mobileregister'] ? $this->var['setting']['regstatus'] : 0 ;
+    
+        $this->var['setting']['thumbquality'] = 50;
+        $this->var['setting']['avatarmethod'] = 0;
+    
+        $this->var['setting']['mobile']['simpletypeurl'] = array();
+        $this->var['setting']['mobile']['simpletypeurl'][0] = $this->var['siteurl'].$this->var['basefilename'].($query_sting_tmp ? '?'.$query_sting_tmp.'&' : '?').'mobile=1&simpletype=no';
+        $this->var['setting']['mobile']['simpletypeurl'][1] =  $this->var['siteurl'].$this->var['basefilename'].($query_sting_tmp ? '?'.$query_sting_tmp.'&' : '?').'mobile=1&simpletype=yes';
+        $this->var['setting']['mobile']['simpletypeurl'][2] =  $this->var['siteurl'].$this->var['basefilename'].($query_sting_tmp ? '?'.$query_sting_tmp.'&' : '?').'mobile=2';
+        unset($query_sting_tmp);
+        ob_start();
+    }
+
 }
