@@ -22,4 +22,15 @@ class discuz_table extends discuz_base
     }
     protected function _init_extend() {
     }
+    
+    public function fetch($id, $force_from_db = false){
+        $data = array();
+        if(!empty($id)) {
+            if($force_from_db || ($data = $this->fetch_cache($id)) === false) {
+                $data = DB::fetch_first('SELECT * FROM '.DB::table($this->_table).' WHERE '.DB::field($this->_pk, $id));
+                if(!empty($data)) $this->store_cache($id, $data);
+            }
+        }
+        return $data;
+    }
 }
