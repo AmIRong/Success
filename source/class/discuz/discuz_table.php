@@ -42,4 +42,8 @@ class discuz_table extends discuz_base
         }
         return $data;
     }
+    
+    public function insert($data, $return_insert_id = false, $replace = false, $silent = false) {
+        return DB::insert($this->_table, $data, $return_insert_id, $replace, $silent);
+    }
 }
