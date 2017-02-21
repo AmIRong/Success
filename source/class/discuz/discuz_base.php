@@ -5,5 +5,7 @@ if(!defined('IN_DISCUZ')) {
 
 abstract class discuz_base
 {
+    public function __construct() {
     
+    }
 }

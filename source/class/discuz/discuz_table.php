@@ -46,4 +46,14 @@ class discuz_table extends discuz_base
     public function insert($data, $return_insert_id = false, $replace = false, $silent = false) {
         return DB::insert($this->_table, $data, $return_insert_id, $replace, $silent);
     }
+    
+    public function store_cache($id, $data, $cache_ttl = null, $pre_cache_key = null) {
+        $ret = false;
+        if($this->_allowmem) {
+            if($pre_cache_key === null)	$pre_cache_key = $this->_pre_cache_key;
+            if($cache_ttl === null)	$cache_ttl = $this->_cache_ttl;
+            $ret = memory('set', $id, $data, $cache_ttl, $pre_cache_key);
+        }
+        return $ret;
+    }
 }
