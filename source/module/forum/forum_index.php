@@ -21,6 +21,8 @@ $postdata = $_G['cache']['historyposts'] ? explode("\t", $_G['cache']['historypo
 $postdata[0] = intval($postdata[0]);
 $postdata[1] = intval($postdata[1]);
 
+
+list($navtitle, $metadescription, $metakeywords) = get_seosetting('forum');
 function get_index_online_details() {
     $showoldetails = getgpc('showoldetails');
     switch($showoldetails) {

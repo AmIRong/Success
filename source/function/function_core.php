@@ -376,3 +376,7 @@ function libfile($libname, $folder = '') {
     return preg_match('/^[\w\d\/_]+$/i', $path) ? realpath(DISCUZ_ROOT.$path.'.php') : false;
 }
 
+function get_seosetting($page, $data = array(), $defset = array()) {
+    return helper_seo::get_seosetting($page, $data, $defset);
+}
+
