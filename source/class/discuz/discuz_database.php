@@ -143,6 +143,17 @@ class discuz_database {
     public static function checkquery($sql) {
         return discuz_database_safecheck::checkquery($sql);
     }
+    
+    public static function fetch($resourceid, $type = MYSQL_ASSOC) {
+        return self::$db->fetch_array($resourceid, $type);
+    }
+    
+    public static function fetch_first($sql, $arg = array(), $silent = false) {
+        $res = self::query($sql, $arg, $silent, false);
+        $ret = self::$db->fetch_array($res);
+        self::$db->free_result($res);
+        return $ret ? $ret : array();
+    }
 }
 
 class discuz_database_safecheck {
@@ -270,5 +281,9 @@ class discuz_database_safecheck {
         }
     
         return 1;
+    }
+    
+    public static function fetch($resourceid, $type = MYSQL_ASSOC) {
+        return self::$db->fetch_array($resourceid, $type);
     }
 }
