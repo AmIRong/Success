@@ -234,3 +234,18 @@ function get_index_page_guest_cache() {
         exit();
     }
 }
+
+function get_index_memory_by_groupid($key) {
+    $enable = getglobal('setting/memory/forumindex');
+    if($enable !== null && memory('check')) {
+        if(IS_ROBOT) {
+            $key = 'for_robot';
+        }
+        $ret = memory('get', 'forum_index_page_'.$key);
+        define('FORUM_INDEX_PAGE_MEMORY', $ret ? 1 : 0);
+        if($ret) {
+            return $ret;
+        }
+    }
+    return array('none' => null);
+}
