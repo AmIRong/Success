@@ -139,4 +139,8 @@ class discuz_database {
     
                     return '\'\'';
     }
+    
+    public static function checkquery($sql) {
+        return discuz_database_safecheck::checkquery($sql);
+    }
 }
