@@ -170,6 +170,16 @@ class discuz_database {
     
         return self::query("$cmd $table SET $sql", null, $silent, !$return_insert_id);
     }
+    
+    public static function implode($array, $glue = ',') {
+        $sql = $comma = '';
+        $glue = ' ' . trim($glue) . ' ';
+        foreach ($array as $k => $v) {
+            $sql .= $comma . self::quote_field($k) . '=' . self::quote($v);
+            $comma = $glue;
+        }
+        return $sql;
+    }
 }
 
 class discuz_database_safecheck {
