@@ -45,3 +45,9 @@ if(C::app()->var['mod'] == 'group') {
 
 C::app()->cachelist = $cachelist;
 C::app()->init();
+
+loadforum();
+
+set_rssauth();
+
+runhooks();
