@@ -47,4 +47,56 @@ class discuz_cron
         discuz_process::unlock($processname);
         return true;
     }
+    
+    private static function setnextime($cron) {
+    
+        if(empty($cron)) return FALSE;
+    
+        list($yearnow, $monthnow, $daynow, $weekdaynow, $hournow, $minutenow) = explode('-', gmdate('Y-m-d-w-H-i', TIMESTAMP + getglobal('setting/timeoffset') * 3600));
+    
+        if($cron['weekday'] == -1) {
+            if($cron['day'] == -1) {
+                $firstday = $daynow;
+                $secondday = $daynow + 1;
+            } else {
+                $firstday = $cron['day'];
+                $secondday = $cron['day'] + gmdate('t', TIMESTAMP + getglobal('setting/timeoffset') * 3600);
+            }
+        } else {
+            $firstday = $daynow + ($cron['weekday'] - $weekdaynow);
+            $secondday = $firstday + 7;
+        }
+    
+        if($firstday < $daynow) {
+            $firstday = $secondday;
+        }
+    
+        if($firstday == $daynow) {
+            $todaytime = self::todaynextrun($cron);
+            if($todaytime['hour'] == -1 && $todaytime['minute'] == -1) {
+                $cron['day'] = $secondday;
+                $nexttime = self::todaynextrun($cron, 0, -1);
+                $cron['hour'] = $nexttime['hour'];
+                $cron['minute'] = $nexttime['minute'];
+            } else {
+                $cron['day'] = $firstday;
+                $cron['hour'] = $todaytime['hour'];
+                $cron['minute'] = $todaytime['minute'];
+            }
+        } else {
+            $cron['day'] = $firstday;
+            $nexttime = self::todaynextrun($cron, 0, -1);
+            $cron['hour'] = $nexttime['hour'];
+            $cron['minute'] = $nexttime['minute'];
+        }
+    
+        $nextrun = @gmmktime($cron['hour'], $cron['minute'] > 0 ? $cron['minute'] : 0, 0, $monthnow, $cron['day'], $yearnow) - getglobal('setting/timeoffset') * 3600;
+        $data = array('lastrun' => TIMESTAMP, 'nextrun' => $nextrun);
+        if(!($nextrun > TIMESTAMP)) {
+            $data['available'] = '0';
+        }
+        C::t('common_cron')->update($cron['cronid'], $data);
+    
+        return true;
+    }
 }
