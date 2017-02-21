@@ -144,3 +144,26 @@ class discuz_database {
         return discuz_database_safecheck::checkquery($sql);
     }
 }
+
+class discuz_database_safecheck {
+    
+    public static function checkquery($sql) {
+        if (self::$config === null) {
+            self::$config = getglobal('config/security/querysafe');
+        }
+        if (self::$config['status']) {
+            $check = 1;
+            $cmd = strtoupper(substr(trim($sql), 0, 3));
+            if(isset(self::$checkcmd[$cmd])) {
+                $check = self::_do_query_safe($sql);
+            } elseif(substr($cmd, 0, 2) === '/*') {
+                $check = -1;
+            }
+    
+            if ($check < 1) {
+                throw new DbException('It is not safe to do this query', 0, $sql);
+            }
+        }
+        return true;
+    }
+}
