@@ -189,4 +189,103 @@ EOT;
     public static function clear($message) {
         return str_replace(array("\t", "\r", "\n"), " ", $message);
     }
+    
+    public static function template_error($message, $tplname) {
+        $message = lang('error', $message);
+        $tplname = str_replace(DISCUZ_ROOT, '', $tplname);
+        $message = $message.': '.$tplname;
+        discuz_error::system_error($message);
+    }
+    
+    public static function system_error($message, $show = true, $save = true, $halt = true) {
+        if(!empty($message)) {
+            $message = lang('error', $message);
+        } else {
+            $message = lang('error', 'error_unknow');
+        }
+    
+        list($showtrace, $logtrace) = discuz_error::debug_backtrace();
+    
+        if($save) {
+            $messagesave = '<b>'.$message.'</b><br><b>PHP:</b>'.$logtrace;
+            discuz_error::write_error_log($messagesave);
+        }
+    
+        if($show) {
+            if(!defined('IN_MOBILE')) {
+                discuz_error::show_error('system', "<li>$message</li>", $showtrace, 0);
+            } else {
+                discuz_error::mobile_show_error('system', "<li>$message</li>", $showtrace, 0);
+            }
+        }
+    
+        if($halt) {
+            exit();
+        } else {
+            return $message;
+        }
+    }
+    
+    public static function debug_backtrace() {
+        $skipfunc[] = 'discuz_error->debug_backtrace';
+        $skipfunc[] = 'discuz_error->db_error';
+        $skipfunc[] = 'discuz_error->template_error';
+        $skipfunc[] = 'discuz_error->system_error';
+        $skipfunc[] = 'db_mysql->halt';
+        $skipfunc[] = 'db_mysql->query';
+        $skipfunc[] = 'DB::_execute';
+    
+        $show = $log = '';
+        $debug_backtrace = debug_backtrace();
+        krsort($debug_backtrace);
+        foreach ($debug_backtrace as $k => $error) {
+            $file = str_replace(DISCUZ_ROOT, '', $error['file']);
+            $func = isset($error['class']) ? $error['class'] : '';
+            $func .= isset($error['type']) ? $error['type'] : '';
+            $func .= isset($error['function']) ? $error['function'] : '';
+            if(in_array($func, $skipfunc)) {
+                break;
+            }
+            $error[line] = sprintf('%04d', $error['line']);
+    
+            $show .= "<li>[Line: $error[line]]".$file."($func)</li>";
+            $log .= !empty($log) ? ' -> ' : '';$file.':'.$error['line'];
+            $log .= $file.':'.$error['line'];
+        }
+        return array($show, $log);
+    }
+    
+    public static function write_error_log($message) {
+    
+        $message = discuz_error::clear($message);
+        $time = time();
+        $file =  DISCUZ_ROOT.'./data/log/'.date("Ym").'_errorlog.php';
+        $hash = md5($message);
+    
+        $uid = getglobal('uid');
+        $ip = getglobal('clientip');
+    
+        $user = '<b>User:</b> uid='.intval($uid).'; IP='.$ip.'; RIP:'.$_SERVER['REMOTE_ADDR'];
+        $uri = 'Request: '.dhtmlspecialchars(discuz_error::clear($_SERVER['REQUEST_URI']));
+        $message = "<?PHP exit;?>\t{$time}\t$message\t$hash\t$user $uri\n";
+        if($fp = @fopen($file, 'rb')) {
+            $lastlen = 50000;
+            $maxtime = 60 * 10;
+            $offset = filesize($file) - $lastlen;
+            if($offset > 0) {
+                fseek($fp, $offset);
+            }
+            if($data = fread($fp, $lastlen)) {
+                $array = explode("\n", $data);
+                if(is_array($array)) foreach($array as $key => $val) {
+                    $row = explode("\t", $val);
+                    if($row[0] != '<?PHP exit;?>') continue;
+                    if($row[3] == $hash && ($row[1] > $time - $maxtime)) {
+                        return;
+                    }
+                }
+            }
+        }
+        error_log($message, 3, $file);
+    }
 }

@@ -169,6 +169,16 @@ class template {
         $this->replacecode['replace'][$i] = "<?php {$dev}if(!empty(\$_G['setting']['pluginhooks']['$hookid']$key)) echo \$_G['setting']['pluginhooks']['$hookid']$key;?>";
         return $search;
     }
+    
+    function addquote($var) {
+        return str_replace("\\\"", "\"", preg_replace("/\[([a-zA-Z0-9_\-\.\x7f-\xff]+)\]/s", "['\\1']", $var));
+    }
+    
+    function stripvtags($expr, $statement = '') {
+        $expr = str_replace("\\\"", "\"", preg_replace("/\<\?\=(\\\$.+?)\?\>/s", "\\1", $expr));
+        $statement = str_replace("\\\"", "\"", $statement);
+        return $expr.$statement;
+    }
 }
 
 ?>
