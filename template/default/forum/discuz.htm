@@ -1,0 +1,22 @@
+<!--{template common/header}-->
+
+
+<div id="pt" class="bm cl">
+	<!--{if empty($gid) && $announcements}-->
+	<div class="y">
+		<div id="an">
+			<dl class="cl">
+				<dt class="z xw1">{lang announcements}:&nbsp;</dt>
+				<dd>
+					<div id="anc"><ul id="ancl">$announcements</ul></div>
+				</dd>
+			</dl>
+		</div>
+		<script type="text/javascript">announcement();</script>
+	</div>
+	<!--{/if}-->
+	<div class="z">
+		<a href="./" class="nvhm" title="{lang homepage}">$_G[setting][bbname]</a><em>&raquo;</em><a href="forum.php">{$_G[setting][navs][2][navname]}</a>$navigation
+	</div>
+	<div class="z"><!--{hook/index_status_extra}--></div>
+</div>

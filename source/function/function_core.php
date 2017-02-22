@@ -531,3 +531,7 @@ function checktplrefresh($maintpl, $subtpl, $timecompare, $templateid, $cachefil
     }
     return FALSE;
 }
+
+function strexists($string, $find) {
+    return !(strpos($string, $find) === FALSE);
+}
