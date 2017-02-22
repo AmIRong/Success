@@ -405,6 +405,24 @@ if(defined('IN_ARCHIVER')) {
 }
 categorycollapse();
 
+if($gid && !empty($catlist)) {
+    $_G['category'] = $catlist[$gid];
+    $forumseoset = array(
+        'seotitle' => $catlist[$gid]['seotitle'],
+        'seokeywords' => $catlist[$gid]['keywords'],
+        'seodescription' => $catlist[$gid]['seodescription']
+    );
+    $seodata = array('fgroup' => $catlist[$gid]['name']);
+    list($navtitle, $metadescription, $metakeywords) = get_seosetting('threadlist', $seodata, $forumseoset);
+    if(empty($navtitle)) {
+        $navtitle = $navtitle_g;
+        $nobbname = false;
+    } else {
+        $nobbname = true;
+    }
+    $_G['fid'] = $gid;
+}
+
 function get_index_online_details() {
     $showoldetails = getgpc('showoldetails');
     switch($showoldetails) {
