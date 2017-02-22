@@ -56,4 +56,24 @@ class discuz_table extends discuz_base
         }
         return $ret;
     }
+    
+    public function fetch_all($ids, $force_from_db = false) {
+        $data = array();
+        if(!empty($ids)) {
+            if($force_from_db || ($data = $this->fetch_cache($ids)) === false || count($ids) != count($data)) {
+                if(is_array($data) && !empty($data)) {
+                    $ids = array_diff($ids, array_keys($data));
+                }
+                if($data === false) $data =array();
+                if(!empty($ids)) {
+                    $query = DB::query('SELECT * FROM '.DB::table($this->_table).' WHERE '.DB::field($this->_pk, $ids));
+                    while($value = DB::fetch($query)) {
+                        $data[$value[$this->_pk]] = $value;
+                        $this->store_cache($value[$this->_pk], $value);
+                    }
+                }
+            }
+        }
+        return $data;
+    }
 }
