@@ -156,6 +156,19 @@ class template {
             return '!'.$var.'!';
         }
     }
+    
+    function hooktags($hookid, $key = '') {
+        global $_G;
+        $i = count($this->replacecode['search']);
+        $this->replacecode['search'][$i] = $search = "<!--HOOK_TAG_$i-->";
+        $dev = '';
+        if(isset($_G['config']['plugindeveloper']) && $_G['config']['plugindeveloper'] == 2) {
+            $dev = "echo '<hook>[".($key ? 'array' : 'string')." $hookid".($key ? '/\'.'.$key.'.\'' : '')."]</hook>';";
+        }
+        $key = $key !== '' ? "[$key]" : '';
+        $this->replacecode['replace'][$i] = "<?php {$dev}if(!empty(\$_G['setting']['pluginhooks']['$hookid']$key)) echo \$_G['setting']['pluginhooks']['$hookid']$key;?>";
+        return $search;
+    }
 }
 
 ?>
