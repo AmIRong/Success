@@ -399,6 +399,12 @@ if(!$gid && (!defined('FORUM_INDEX_PAGE_MEMORY') || !FORUM_INDEX_PAGE_MEMORY)) {
     require_once DISCUZ_ROOT.'./source/include/misc/misc_category.php';
 }
 
+if(defined('IN_ARCHIVER')) {
+    include loadarchiver('forum/discuz');
+    exit();
+}
+categorycollapse();
+
 function get_index_online_details() {
     $showoldetails = getgpc('showoldetails');
     switch($showoldetails) {
@@ -460,5 +466,31 @@ function get_index_announcements() {
         }
     }
     return $announcements;
+}
+
+function categorycollapse() {
+    global $_G, $collapse, $catlist;
+    if(!$_G['uid']) {
+        return;
+    }
+    foreach($catlist as $fid => $forum) {
+        if(!isset($_G['cookie']['collapse']) || strpos($_G['cookie']['collapse'], '_category_'.$fid.'_') === FALSE) {
+            $catlist[$fid]['collapseimg'] = 'collapsed_no.gif';
+            $collapse['category_'.$fid] = '';
+        } else {
+            $catlist[$fid]['collapseimg'] = 'collapsed_yes.gif';
+            $collapse['category_'.$fid] = 'display: none';
+        }
+    }
+
+    for($i = -2; $i <= 0; $i++) {
+        if(!isset($_G['cookie']['collapse']) || strpos($_G['cookie']['collapse'], '_category_'.$i.'_') === FALSE) {
+            $collapse['collapseimg_'.$i] = 'collapsed_no.gif';
+            $collapse['category_'.$i] = '';
+        } else {
+            $collapse['collapseimg_'.$i] = 'collapsed_yes.gif';
+            $collapse['category_'.$i] = 'display: none';
+        }
+    }
 }
 
