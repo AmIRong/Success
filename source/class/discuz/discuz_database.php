@@ -180,6 +180,21 @@ class discuz_database {
         }
         return $sql;
     }
+    
+    public static function fetch_all($sql, $arg = array(), $keyfield = '', $silent=false) {
+    
+        $data = array();
+        $query = self::query($sql, $arg, $silent, false);
+        while ($row = self::$db->fetch_array($query)) {
+            if ($keyfield && isset($row[$keyfield])) {
+                $data[$row[$keyfield]] = $row;
+            } else {
+                $data[] = $row;
+            }
+        }
+        self::$db->free_result($query);
+        return $data;
+    }
 }
 
 class discuz_database_safecheck {
