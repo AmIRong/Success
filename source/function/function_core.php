@@ -504,3 +504,30 @@ function template($file, $templateid = 0, $tpldir = '', $gettplfile = 0, $primal
         checktplrefresh($tplfile, $tplfile, @filemtime(DISCUZ_ROOT.$cachefile), $templateid, $cachefile, $tpldir, $file);
         return DISCUZ_ROOT.$cachefile;
 }
+
+function checktplrefresh($maintpl, $subtpl, $timecompare, $templateid, $cachefile, $tpldir, $file) {
+    static $tplrefresh, $timestamp, $targettplname;
+    if($tplrefresh === null) {
+        $tplrefresh = getglobal('config/output/tplrefresh');
+        $timestamp = getglobal('timestamp');
+    }
+
+    if(empty($timecompare) || $tplrefresh == 1 || ($tplrefresh > 1 && !($timestamp % $tplrefresh))) {
+        if(empty($timecompare) || @filemtime(DISCUZ_ROOT.$subtpl) > $timecompare) {
+            require_once DISCUZ_ROOT.'/source/class/class_template.php';
+            $template = new template();
+            $template->parse_template($maintpl, $templateid, $tpldir, $file, $cachefile);
+            if($targettplname === null) {
+                $targettplname = getglobal('style/tplfile');
+                if(!empty($targettplname)) {
+                    include_once libfile('function/block');
+                    $targettplname = strtr($targettplname, ':', '_');
+                    update_template_block($targettplname, getglobal('style/tpldirectory'), $template->blocks);
+                }
+                $targettplname = true;
+            }
+            return TRUE;
+        }
+    }
+    return FALSE;
+}

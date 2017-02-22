@@ -755,4 +755,35 @@ class discuz_application extends discuz_base{
     
         return true;
     }
+    
+    public function _init_style() {
+        if(defined('IN_MOBILE')) {
+            $mobile = max(1, intval(IN_MOBILE));
+            if($mobile && $this->var['setting']['styleid'.$mobile]) {
+                $styleid = $this->var['setting']['styleid'.$mobile];
+            }
+        } else {
+            $styleid = !empty($this->var['cookie']['styleid']) ? $this->var['cookie']['styleid'] : 0;
+        }
+        if(intval(!empty($this->var['forum']['styleid']))) {
+            $this->var['cache']['style_default']['styleid'] = $styleid = $this->var['forum']['styleid'];
+        } elseif(intval(!empty($this->var['category']['styleid']))) {
+            $this->var['cache']['style_default']['styleid'] = $styleid = $this->var['category']['styleid'];
+        }
+    
+        $styleid = intval($styleid);
+    
+        if($styleid && $styleid != $this->var['setting']['styleid']) {
+            loadcache('style_'.$styleid);
+            if($this->var['cache']['style_'.$styleid]) {
+                $this->var['style'] = $this->var['cache']['style_'.$styleid];
+            }
+        }
+    
+        define('IMGDIR', $this->var['style']['imgdir']);
+        define('STYLEID', $this->var['style']['styleid']);
+        define('VERHASH', $this->var['style']['verhash']);
+        define('TPLDIR', $this->var['style']['tpldir']);
+        define('TEMPLATEID', $this->var['style']['templateid']);
+    }
 }
