@@ -104,6 +104,58 @@ class template {
     function error($message, $tplname) {
         discuz_error::template_error($message, $tplname);
     }
+    
+    function languagevar($var) {
+        $vars = explode(':', $var);
+        $isplugin = count($vars) == 2;
+        if(!$isplugin) {
+            !isset($this->language['inner']) && $this->language['inner'] = array();
+            $langvar = &$this->language['inner'];
+        } else {
+            !isset($this->language['plugin'][$vars[0]]) && $this->language['plugin'][$vars[0]] = array();
+            $langvar = &$this->language['plugin'][$vars[0]];
+            $var = &$vars[1];
+        }
+        if(!isset($langvar[$var])) {
+            $this->language['inner'] = lang('template');
+            if(!$isplugin) {
+    
+                if(defined('IN_MOBILE')) {
+                    $mobiletpl = getglobal('mobiletpl');
+                    list($path) = explode('/', str_replace($mobiletpl[IN_MOBILE].'/', '', $this->file));
+                } else {
+                    list($path) = explode('/', $this->file);
+                }
+    
+                foreach(lang($path.'/template') as $k => $v) {
+                    $this->language['inner'][$k] = $v;
+                }
+    
+                if(defined('IN_MOBILE')) {
+                    foreach(lang('mobile/template') as $k => $v) {
+                        $this->language['inner'][$k] = $v;
+                    }
+                }
+            } else {
+                global $_G;
+                if(empty($_G['config']['plugindeveloper'])) {
+                    loadcache('pluginlanguage_template');
+                } elseif(!isset($_G['cache']['pluginlanguage_template'][$vars[0]]) && preg_match("/^[a-z]+[a-z0-9_]*$/i", $vars[0])) {
+                    if(@include(DISCUZ_ROOT.'./data/plugindata/'.$vars[0].'.lang.php')) {
+                        $_G['cache']['pluginlanguage_template'][$vars[0]] = $templatelang[$vars[0]];
+                    } else {
+                        loadcache('pluginlanguage_template');
+                    }
+                }
+                $this->language['plugin'][$vars[0]] = $_G['cache']['pluginlanguage_template'][$vars[0]];
+            }
+        }
+        if(isset($langvar[$var])) {
+            return $langvar[$var];
+        } else {
+            return '!'.$var.'!';
+        }
+    }
 }
 
 ?>
